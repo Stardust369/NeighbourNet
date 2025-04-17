@@ -5,7 +5,7 @@ import { Notification } from '../models/notification.model.js';
 import { notifyIssuePicked } from './notification.controller.js';
 import { ApiError } from '../utils/ApiError.js';
 import { ApiResponse } from '../utils/ApiResponse.js';
-import { io } from "../server.js";
+
 
 //Create a new issue
 export const createIssue = async (req, res) => {

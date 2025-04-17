@@ -62,11 +62,7 @@ const IssueSchema = new mongoose.Schema({
         text: String,
         date: { type: Date, default: Date.now }
     }],
-    tags: {
-        type: [String],
-        required: true,
-        enum: issueTags
-    },
+   
 }, { timestamps: true });
 
 //to create slug from the title:
