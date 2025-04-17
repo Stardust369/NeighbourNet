@@ -14,6 +14,7 @@ import NGODash from './pages/NGODash'
 import ResetPassword from './pages/ResetPassword'
 import { useDispatch, useSelector } from 'react-redux'
 import { getUser } from './redux/slices/authSlice'
+import PostIssue from './pages/PostIssue'
 const App = () => {
 
   const {user,isAuthenticated}= useSelector((state)=>state.auth)
@@ -33,6 +34,7 @@ const App = () => {
               <Route path="/password/forgot" element={<ForgotPassword />} />
               <Route path="/otp-verification/:email" element={<OTP />} />
               <Route path="/password/reset/:token" element={<ResetPassword />} />
+              <Route path="/create" element={<PostIssue />} />
           </Routes>
           <ToastContainer theme='dark'/>
       </Router>
