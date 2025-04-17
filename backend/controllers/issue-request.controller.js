@@ -1,6 +1,5 @@
-import IssueRequest from '../models/IssueRequest.js';
-import Issue from '../models/Issue.js';
-
+import IssueRequest from '../models/request-issue.model.js'
+import Issue from '../models/issue.model.js'
 export const requestIssue = async (req, res) => {
   try {
     const { issueId, description, timeline } = req.body;
