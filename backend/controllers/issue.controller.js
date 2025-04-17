@@ -70,15 +70,24 @@ export const assignNgoToIssue = async (req, res) => {
 };
 
 //Get all issues (with optional filters)
-export const getIssues = async (req, res) => {
+export const getAllIssues = async (req, res) => {
   try {
-    const filters = {};
-    if (req.query.status) filters.status = req.query.status;
-    if (req.query.tags) filters.tags = { $in: req.query.tags.split(",") };
-    const issues = await Issue.find(filters).populate("postedBy assignedTo");
-    return res.status(200).json(new ApiResponse(200, issues, "Issues fetched successfully"));
+    // Optionally, you can paginate or sort
+    const issues = await Issue
+      .find()
+      .sort({ createdAt: -1 })     // newest first
+      .populate("postedBy", "name"); // include reporter name
+     
+    return res
+      .status(200)
+      .json(new ApiResponse(200,  issues , "Issues fetched successfully"));
   } catch (error) {
-    return res.status(500).json({ message: "Server error", error: error.message });
+    console.error("Error in getAllIssues:", error.stack);
+    return res
+      .status(500)
+      .json(new ApiResponse(500, null, "Server error", {
+        error: process.env.NODE_ENV === "development" ? error.message : undefined
+      }));
   }
 };
 
