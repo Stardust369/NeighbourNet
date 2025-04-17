@@ -10,6 +10,8 @@ import Register from './pages/Register'
 import ForgotPassword from './pages/ForgotPassword';
 import IssueDetailsWrapper from './components/IssueDetailsWrapper';
 import OTP from './pages/OTP'
+import DashBoard from './pages/DashBoard'
+import CreatedIssues from './pages/CreatedIssues'
 import NGODash from './pages/NGODash'
 import ResetPassword from './pages/ResetPassword'
 import { useDispatch, useSelector } from 'react-redux'
@@ -28,6 +30,8 @@ const App = () => {
           <Routes>
               <Route path="/" element={<Home />} />
               <Route path="/ngo-dashboard" element={<NGODash />} />
+              <Route path="/dashboard" element={<DashBoard />} />
+              <Route path="/dashboard/created-issues" element={<CreatedIssues />} />
               <Route path="/issues/:id" element={<IssueDetailsWrapper />} />
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />

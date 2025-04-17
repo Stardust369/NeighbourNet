@@ -130,7 +130,7 @@ export default function PostIssue() {
         credentials: "include",
         body: JSON.stringify(body),
       });
-      if (res.ok) navigate("/issues");
+      if (res.ok) navigate("/dashboard");
       else setPublishError("Failed to post issue.");
     } catch {
       setPublishError("Something went wrong.");

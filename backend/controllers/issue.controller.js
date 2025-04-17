@@ -69,6 +69,24 @@ export const assignNgoToIssue = async (req, res) => {
   }
 };
 
+export const getIssueByUser = async (req, res) => {
+  const userId = req.params.id;
+
+  try {
+    const issues = await Issue.find({ postedBy: userId });
+    
+    res.status(200).json({
+      success: true,
+      data: issues,
+    });
+  } catch (error) {
+    console.error('Error fetching user issues:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server Error',
+    });
+  }
+};
 //Get all issues (with optional filters)
 export const getAllIssues = async (req, res) => {
   try {
