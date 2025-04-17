@@ -19,6 +19,7 @@ const userSchema= new mongoose.Schema({
     role: {
         type: String,
         enum: ["Admin", "NGO", "User"],
+        required:true,
         default: "User",
       },
       accountVerified:{
@@ -45,7 +46,7 @@ const userSchema= new mongoose.Schema({
         }
       ],
       avatar:{ type: String },
-      location: { type: String },
+      location: { type: String,required:true },
       verificationCode: Number,
       verificationCodeExpire:Date,
       resetPasswordToken:String,

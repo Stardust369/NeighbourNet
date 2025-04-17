@@ -7,21 +7,34 @@ import bcrypt from "bcryptjs"
 import crypto from "crypto"
 export const register = async (req, res) => {
     try {
-        const { name, email, password } = req.body;
-        if (!name || !email || !password) {
+        const { name, email, password, role, location } = req.body;
+
+        if (!name || !email || !password || !role || !location) {
             return res.status(400).json({ msg: "Please fill in all fields" });
         }
+
         const isAlreadyPresent = await User.findOne({ email, accountVerified: true });
         if (isAlreadyPresent) {
             return res.status(400).json({ msg: "Email is already registered" });
         }
+
         if (password.length < 8 || password.length > 16) {
-            return res.status(400).json({ msg: "Password must be between 8 and 16 characters" })
+            return res.status(400).json({ msg: "Password must be between 8 and 16 characters" });
         }
-        const hashedPassword = await bcrypt.hash(password, 10)
-        const user = await User.create({ name, email, password: hashedPassword });
+
+        const hashedPassword = await bcrypt.hash(password, 10);
+
+        const user = await User.create({
+            name,
+            email,
+            password: hashedPassword,
+            role,
+            location
+        });
+
         const verificationCode = await user.generateVerificationCode();
         await user.save();
+
         sendVerificationCode(verificationCode, email, res);
 
     } catch (error) {
@@ -29,9 +42,10 @@ export const register = async (req, res) => {
         return res.status(500).json({
             success: false,
             message: "Something went wrong"
-        })
+        });
     }
 }
+
 
 export const verifyOtp = async (req, res) => {
     const { email, otp } = req.body;

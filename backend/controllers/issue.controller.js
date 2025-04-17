@@ -1,19 +1,22 @@
 import Issue from '../models/issue.model.js';
 import { User } from '../models/user.model.js';
-import Job from '../models/job.model.js';
-import { Notification } from '../models/notification.model.js';
-import { notifyIssuePicked } from './notification.controller.js';
+// import Job from '../models/job.model.js';
+// import { Notification } from '../models/notification.model.js';
+// import { notifyIssuePicked } from './notification.controller.js';
 import { ApiError } from '../utils/ApiError.js';
 import { ApiResponse } from '../utils/ApiResponse.js';
-import { io } from "../server.js";
+
 
 //Create a new issue
 export const createIssue = async (req, res) => {
   try {
+    
     const { title, tags, content, images, videos, issueLocation } = req.body;
+    
     if (!title || !tags || !issueLocation) {
       return res.status(400).json({ message: "Missing required fields" });
     }
+   
     const issue = await Issue.create({
       title,
       tags,
@@ -24,8 +27,14 @@ export const createIssue = async (req, res) => {
       postedBy: req.user._id,
       upvoters: [req.user._id], // auto-upvote by reporter
     });
+    console.log('====================================');
+    console.log(req.user);
+    console.log('====================================');
     return res.status(201).json(new ApiResponse(201, issue, "Issue created successfully"));
   } catch (error) {
+    console.log('====================================');
+    console.log(error.message);
+    console.log('====================================');
     return res.status(500).json({ message: "Server error", error: error.message });
   }
 };
@@ -61,15 +70,24 @@ export const assignNgoToIssue = async (req, res) => {
 };
 
 //Get all issues (with optional filters)
-export const getIssues = async (req, res) => {
+export const getAllIssues = async (req, res) => {
   try {
-    const filters = {};
-    if (req.query.status) filters.status = req.query.status;
-    if (req.query.tags) filters.tags = { $in: req.query.tags.split(",") };
-    const issues = await Issue.find(filters).populate("postedBy assignedTo");
-    return res.status(200).json(new ApiResponse(200, issues, "Issues fetched successfully"));
+    // Optionally, you can paginate or sort
+    const issues = await Issue
+      .find()
+      .sort({ createdAt: -1 })     // newest first
+      .populate("postedBy", "name"); // include reporter name
+     
+    return res
+      .status(200)
+      .json(new ApiResponse(200,  issues , "Issues fetched successfully"));
   } catch (error) {
-    return res.status(500).json({ message: "Server error", error: error.message });
+    console.error("Error in getAllIssues:", error.stack);
+    return res
+      .status(500)
+      .json(new ApiResponse(500, null, "Server error", {
+        error: process.env.NODE_ENV === "development" ? error.message : undefined
+      }));
   }
 };
 
