@@ -10,11 +10,15 @@ import Register from './pages/Register'
 import ForgotPassword from './pages/ForgotPassword';
 import IssueDetailsWrapper from './components/IssueDetailsWrapper';
 import OTP from './pages/OTP'
-import NGODash from './pages/NGODash'
+import Dashboard from './pages/Dashboard'
+import NGODashh from './pages/NGODashh'
+import NGODash from './pages/NGODashboard'
+import UserDashboard from './pages/UserDashboard'
 import ResetPassword from './pages/ResetPassword'
 import { useDispatch, useSelector } from 'react-redux'
 import { getUser } from './redux/slices/authSlice'
 import PostIssue from './pages/PostIssue'
+import AssignedIssues from './pages/AssignedIssues'
 const App = () => {
 
   const {user,isAuthenticated}= useSelector((state)=>state.auth)
@@ -27,7 +31,10 @@ const App = () => {
       <Router>
           <Routes>
               <Route path="/" element={<Home />} />
+              <Route path="/assigned-issues" element={<AssignedIssues />} />
               <Route path="/ngo-dashboard" element={<NGODash />} />
+              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/user-dashboard" element={<UserDashboard />} />
               <Route path="/issues/:id" element={<IssueDetailsWrapper />} />
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
