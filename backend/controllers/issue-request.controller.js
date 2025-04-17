@@ -12,16 +12,13 @@ export const requestIssue = async (req, res) => {
     if (!issue) {
       return res.status(404).json({ error: 'Issue not found.' });
     }
-    const issueRequest = new IssueRequest({
-      issue:issueId,
-      description,
-      timeline,
-      requestedBy:ngoUserid,
-    });
-
-    // Save the request to the database
-    await issueRequest.save();
+    if (issue.status !== 'Open') {
+      return res.status(400).json({ error: 'Issue is not open for assignment.' });
+    }
+    
     issue.assignedTo = ngoUsername;
+    issue.status = 'Assigned';
+    issue.deadline= timeline;
     await issue.save(); 
 
     return res.status(200).json({ success: true, message: 'Request submitted successfully.' });

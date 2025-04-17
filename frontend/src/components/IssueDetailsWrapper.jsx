@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import IssueDetailsPage from './IssueDetail';
 import axios from 'axios';
+import NGOIssueDetailsPage from './NGOIssueDetails';
 export default function IssueDetailsWrapper() {
   const { id } = useParams();
   const [issue, setIssue] = useState(null);
@@ -25,5 +26,5 @@ export default function IssueDetailsWrapper() {
   if (loading) return <p>Loading...</p>;
   if (!issue) return <p>Issue not found</p>;
 
-  return <IssueDetailsPage issue={issue} />;
+  return <NGOIssueDetailsPage issue={issue} />;
 }

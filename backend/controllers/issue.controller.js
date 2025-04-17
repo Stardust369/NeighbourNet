@@ -216,3 +216,62 @@ export const downvoteIssue = async (req, res, next) => {
     }
   };
   
+  export const getClaimedIssuesByUser = async (req, res) => {
+    const { userId } = req.params;
+     const user= await User.findById(userId);
+    try {
+      const claimedIssues = await Issue.find({ assignedTo: user.name }).sort({ timeline: 1 });
+  
+      res.status(200).json({
+        success: true,
+        claimedIssues,
+      });
+    } catch (error) {
+      console.error('Error fetching claimed issues:', error.message);
+      res.status(500).json({
+        success: false,
+        message: 'Failed to fetch claimed issues',
+      });
+    }
+  };
+
+  export const submitVolunteerRequest = async (req, res) => {
+    const { issueId, volunteerPositions, ngoUsername, ngoUserid } = req.body;
+  
+    try {
+      // Find the issue by ID
+      const issue = await Issue.findById(issueId);
+      if (!issue) {
+        return res.status(404).json({ message: "Issue not found" });
+      }
+  
+      // Validate volunteer positions
+      const validationErrors = [];
+      volunteerPositions.forEach((pos, index) => {
+        if (!pos.position || pos.position.trim() === "") {
+          validationErrors.push(`Position at index ${index} is required.`);
+        }
+        if (!pos.slots || isNaN(pos.slots) || pos.slots <= 0) {
+          validationErrors.push(`Invalid slots at index ${index}. Slots should be a positive number.`);
+        }
+      });
+  
+      // If there are validation errors, send them back
+      if (validationErrors.length > 0) {
+        return res.status(400).json({ errors: validationErrors });
+      }
+  
+      // Add the volunteer positions to the issue document
+      issue.volunteerPositions = [...issue.volunteerPositions, ...volunteerPositions];
+  
+      // Save the updated issue
+      await issue.save();
+  
+      // Send a success response
+      res.status(200).json({ message: "Volunteer positions added successfully!" });
+  
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ message: "Something went wrong while processing your request." });
+    }
+  };
