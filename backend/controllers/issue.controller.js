@@ -1,8 +1,8 @@
 import Issue from '../models/issue.model.js';
 import { User } from '../models/user.model.js';
-import Job from '../models/job.model.js';
-import { Notification } from '../models/notification.model.js';
-import { notifyIssuePicked } from './notification.controller.js';
+// import Job from '../models/job.model.js';
+// import { Notification } from '../models/notification.model.js';
+// import { notifyIssuePicked } from './notification.controller.js';
 import { ApiError } from '../utils/ApiError.js';
 import { ApiResponse } from '../utils/ApiResponse.js';
 
@@ -10,10 +10,13 @@ import { ApiResponse } from '../utils/ApiResponse.js';
 //Create a new issue
 export const createIssue = async (req, res) => {
   try {
+    
     const { title, tags, content, images, videos, issueLocation } = req.body;
+    
     if (!title || !tags || !issueLocation) {
       return res.status(400).json({ message: "Missing required fields" });
     }
+   
     const issue = await Issue.create({
       title,
       tags,
@@ -24,8 +27,14 @@ export const createIssue = async (req, res) => {
       postedBy: req.user._id,
       upvoters: [req.user._id], // auto-upvote by reporter
     });
+    console.log('====================================');
+    console.log(req.user);
+    console.log('====================================');
     return res.status(201).json(new ApiResponse(201, issue, "Issue created successfully"));
   } catch (error) {
+    console.log('====================================');
+    console.log(error.message);
+    console.log('====================================');
     return res.status(500).json({ message: "Server error", error: error.message });
   }
 };

@@ -20,8 +20,14 @@ export default function PostIssue() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [publishError, setPublishError] = useState(null);
   const [showTagDropdown, setShowTagDropdown] = useState(false);
+  const [imageUploading, setImageUploading] = useState(false);
+  const [videoUploading, setVideoUploading] = useState(false);
+  const [imageUploadSuccess, setImageUploadSuccess] = useState(false);
+  const [videoUploadSuccess, setVideoUploadSuccess] = useState(false);
 
   const tagDropdownRef = useRef(null);
+  const imageInputRef = useRef(null);
+  const videoInputRef = useRef(null);
   const { user } = useSelector((state) => state.auth);
   const navigate = useNavigate();
 
@@ -49,36 +55,55 @@ export default function PostIssue() {
     setFormData({ ...formData, content: value });
   };
 
-  const handleFileChange = (e, type) => {
-    const files = Array.from(e.target.files);
-    const list = files.map((file) => ({ file, progress: null, url: null, error: null }));
-    if (type === "image") setImages((prev) => [...prev, ...list]);
-    else setVideos((prev) => [...prev, ...list]);
-  };
-
   const uploadFiles = async (list) => {
     const storage = getStorage(app);
-    const updated = await Promise.all(
-      list.map((item) =>
-        new Promise((resolve) => {
-          const fileName = `${Date.now()}-${item.file.name}`;
-          const storageRef = ref(storage, fileName);
-          const task = uploadBytesResumable(storageRef, item.file);
+    const results = [];
+    for (let item of list) {
+      const fileName = `${Date.now()}-${item.file.name}`;
+      const storageRef = ref(storage, fileName);
+      const task = uploadBytesResumable(storageRef, item.file);
+      await new Promise((resolve) => {
+        task.on(
+          "state_changed",
+          null,
+          () => {
+            results.push({ ...item, error: "Upload failed" });
+            resolve();
+          },
+          () => {
+            getDownloadURL(task.snapshot.ref).then((url) => {
+              results.push({ url, fileName });
+              resolve();
+            });
+          }
+        );
+      });
+    }
+    return results;
+  };
 
-          task.on(
-            "state_changed",
-            () => {},
-            () => resolve({ ...item, error: "Upload failed" }),
-            () => {
-              getDownloadURL(task.snapshot.ref).then((url) => {
-                resolve({ ...item, url, progress: null, error: null });
-              });
-            }
-          );
-        })
-      )
-    );
-    return updated;
+  const handleImageUpload = async (e) => {
+    const files = Array.from(e.target.files);
+    if (files.length === 0) return;
+    setImageUploading(true);
+    const list = files.map((file) => ({ file }));
+    const uploaded = await uploadFiles(list);
+    setImages((prev) => [...prev, ...uploaded]);
+    setImageUploading(false);
+    setImageUploadSuccess(true);
+    setTimeout(() => setImageUploadSuccess(false), 3000);
+  };
+
+  const handleVideoUpload = async (e) => {
+    const files = Array.from(e.target.files);
+    if (files.length === 0) return;
+    setVideoUploading(true);
+    const list = files.map((file) => ({ file }));
+    const uploaded = await uploadFiles(list);
+    setVideos((prev) => [...prev, ...uploaded]);
+    setVideoUploading(false);
+    setVideoUploadSuccess(true);
+    setTimeout(() => setVideoUploadSuccess(false), 3000);
   };
 
   const handleSubmit = async (e) => {
@@ -91,17 +116,14 @@ export default function PostIssue() {
     setPublishError(null);
     setIsSubmitting(true);
     try {
-      const uploadedImages = await uploadFiles(images);
-      const uploadedVideos = await uploadFiles(videos);
-
       const body = {
         ...formData,
-        images: uploadedImages.map((i) => ({ url: i.url })),
-        videos: uploadedVideos.map((v) => ({ url: v.url })),
+        images: images.map((i) => ({ url: i.url })),
+        videos: videos.map((v) => ({ url: v.url })),
         postedBy: user._id,
       };
 
-      const res = await fetch("/api/v1/issues/create", {
+      const res = await fetch("http://localhost:3000/api/v1/issues/create", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
@@ -189,26 +211,72 @@ export default function PostIssue() {
             />
           </div>
 
+          {/* Image Upload Section */}
           <div>
-            <label className="block font-medium mb-1">Upload Images</label>
+            <label className="block font-medium mb-1">Images</label>
+            <button
+              type="button"
+              onClick={() => imageInputRef.current.click()}
+              className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+              disabled={imageUploading}
+            >
+              {imageUploading ? (
+                <span className="flex items-center">
+                  <svg className="animate-spin h-5 w-5 mr-2" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
+                  </svg>
+                  Uploading...
+                </span>
+              ) : (
+                'Upload Images'
+              )}
+            </button>
             <input
+              ref={imageInputRef}
               type="file"
               accept="image/*"
               multiple
-              onChange={(e) => handleFileChange(e, "image")}
-              className="w-full"
+              hidden
+              onChange={handleImageUpload}
             />
+            {imageUploadSuccess && (
+              <p className="text-green-600 mt-2">Images uploaded successfully!</p>
+            )}
           </div>
 
+          {/* Video Upload Section */}
           <div>
-            <label className="block font-medium mb-1">Upload Videos</label>
+            <label className="block font-medium mb-1">Videos</label>
+            <button
+              type="button"
+              onClick={() => videoInputRef.current.click()}
+              className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+              disabled={videoUploading}
+            >
+              {videoUploading ? (
+                <span className="flex items-center">
+                  <svg className="animate-spin h-5 w-5 mr-2" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
+                  </svg>
+                  Uploading...
+                </span>
+              ) : (
+                'Upload Videos'
+              )}
+            </button>
             <input
+              ref={videoInputRef}
               type="file"
               accept="video/*"
               multiple
-              onChange={(e) => handleFileChange(e, "video")}
-              className="w-full"
+              hidden
+              onChange={handleVideoUpload}
             />
+            {videoUploadSuccess && (
+              <p className="text-green-600 mt-2">Videos uploaded successfully!</p>
+            )}
           </div>
 
           <button

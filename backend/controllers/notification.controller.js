@@ -4,7 +4,6 @@
 // import Job from "../models/job.model.js";
 // import { sendEmail } from "../utils/sendEmail.js";
 // import { io } from "../server.js";
-// import { generateTaskAssignmentEmailTemplate, generateDonationCompletionEmailTemplate } from "../utils/emailTemplates.js";
 
 // //Notify when issue is picked up by an NGO
 // export const notifyIssuePicked = async (issueId, ngoId) => {
@@ -144,7 +143,7 @@
 // };
 
 
-// const sendNotification = async (req, res, next) => {
+// export const sendNotification = async (req, res, next) => {
 //   try {
 //     const { userId, message, type } = req.body;
 //     if (!userId || !message || !type) {
@@ -157,7 +156,7 @@
 //   }
 // };
 
-// const getAllNotifications = async (req, res, next) => {
+// export const getAllNotifications = async (req, res, next) => {
 //   try {
 //     const userId = req.user._id;
 //     const notifications = await Notification.find({ userId }).sort({ createdAt: -1 });
@@ -167,7 +166,7 @@
 //   }
 // };
 
-// const markNotificationAsRead = async (req, res, next) => {
+// export const markNotificationAsRead = async (req, res, next) => {
 //   try {
 //     const updatedNotification = await Notification.findByIdAndUpdate(
 //       req.params.notificationId,
@@ -183,7 +182,7 @@
 //   }
 // };
 
-// const deleteNotification = async (req, res, next) => {
+// export const deleteNotification = async (req, res, next) => {
 //   try {
 //     const { notificationId } = req.params;
 //     const deletedNotification = await Notification.findByIdAndDelete(notificationId);
@@ -194,15 +193,4 @@
 //   } catch (error) {
 //     next(error);
 //   }
-// };
-
-// export {
-//   sendNotification,
-//   getAllNotifications,
-//   markNotificationAsRead,
-//   deleteNotification,
-//   notifyIssuePicked,
-//   notifyTaskAssignment,
-//   notifyDonationCompletion,
-//   sendJobReminders,
 // };
