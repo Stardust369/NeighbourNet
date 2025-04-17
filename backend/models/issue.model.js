@@ -1,23 +1,6 @@
-import mongoose, { trusted } from "mongoose"
+import mongoose from "mongoose"
 
-const VolunteeringPositionSchema = new mongoose.Schema({
-    title: {
-        type: String, 
-        required: trusted
-    },
-    slots: {
-        type: Number, 
-        required: true
-    },
-    registeredUsers: [{
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "User"
-    }],
-    waGroupLink: {
-        type: String,
-        default: ""
-    }
-})
+const issueTags = ["Road", "Water", "Electricity", "Education", "Health", "Sanitation"];
 
 const IssueSchema = new mongoose.Schema({
     title: {
@@ -48,15 +31,34 @@ const IssueSchema = new mongoose.Schema({
         type: String,
         required: true
     },
-    volunteeringPositions: [VolunteeringPositionSchema],
-    registeredVolunteers: [{
+    assignedTo: {
         type: mongoose.Schema.ObjectId,
-        ref: "User"
-    }],
+        ref: "User",
+        default: null
+    },
     postedBy: {
         type: mongoose.Schema.ObjectId,
         ref: "User"
-    }
+    },
+    status: {
+        type: String,
+        enum: ["Open", "Assigned", "Completed"],
+        default: "Open"
+    },
+    upvotes: {
+        type: Number,
+        default: 0
+    },
+    comments: [{
+        user: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+        text: String,
+        date: { type: Date, default: Date.now }
+    }],
+    tags: {
+        type: [String],
+        required: true,
+        enum: issueTags
+    },
 }, { timestamps: true });
 
 //to create slug from the title:
