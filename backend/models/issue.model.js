@@ -45,9 +45,17 @@ const IssueSchema = new mongoose.Schema({
         enum: ["Open", "Assigned", "Completed"],
         default: "Open"
     },
-    upvotes: {
-        type: Number,
-        default: 0
+    upvoters: [{
+        type: mongoose.Schema.ObjectId,
+        ref: "User",
+    }],
+    downvoters: [{
+        type: mongoose.Schema.ObjectId,
+        ref: "User",
+    }],
+    isFlagged: {
+        type: Boolean,
+        default: false
     },
     comments: [{
         user: { type: mongoose.Schema.Types.ObjectId, ref: "User" },

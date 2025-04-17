@@ -16,7 +16,7 @@ const notificationSchema = new Schema({
     },
     type: {
         type: String,
-        enum: ['registration', 'reminder', 'feedback', 'task-assigned', "proof-accepted", "proof-rejected"],
+        enum: ['registration', 'reminder', 'feedback', 'task-assigned', "proof-accepted", "proof-rejected", "donation-completed"],
         required: true
     },
     eventSlug: {
