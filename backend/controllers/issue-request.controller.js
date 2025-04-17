@@ -1,34 +1,33 @@
 import IssueRequest from '../models/request-issue.model.js'
 import Issue from '../models/issue.model.js'
+
 export const requestIssue = async (req, res) => {
+  const { issueId, description,ngoUsername, ngoUserid,timeline } = req.body;
+  if (!issueId || !description || !timeline) {
+    return res.status(400).json({ error: 'All fields are required.' });
+  }
+
   try {
-    const { issueId, description, timeline } = req.body;
-    const requesterId = req.user._id; 
-
-    if (!issueId || !description || !timeline) {
-      return res.status(400).json({ message: 'All fields are required.' });
+    const issue = await Issue.findById(issueId); 
+    if (!issue) {
+      return res.status(404).json({ error: 'Issue not found.' });
     }
-
-    const request = await IssueRequest.create({
-      issue: issueId,
+    const issueRequest = new IssueRequest({
+      issue:issueId,
       description,
       timeline,
-      requestedBy: requesterId,
+      requestedBy:ngoUserid,
     });
 
-    const updatedIssue = await Issue.findByIdAndUpdate(
-      issueId,
-      { assignedTo: requesterId, status: 'Assigned' },
-      { new: true }
-    ).populate('assignedTo', 'name email'); 
-    return res.status(200).json({
-      success: true,
-      message: 'Issue has been requested and assigned.',
-      issue: updatedIssue,
-      request,
-    });
-  } catch (error) {
-    console.error('Request Issue Error:', error);
-    return res.status(500).json({ success: false, message: 'Something went wrong.' });
+    // Save the request to the database
+    await issueRequest.save();
+    issue.assignedTo = ngoUsername;
+    await issue.save(); 
+
+    return res.status(200).json({ success: true, message: 'Request submitted successfully.' });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: 'Something went wrong.' });
   }
 };
+

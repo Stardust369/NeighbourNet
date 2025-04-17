@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useSelector } from 'react-redux';
 import axios from 'axios';
 import dayjs from 'dayjs';
 import { toast } from 'react-toastify';
@@ -9,6 +10,8 @@ export default function IssueDetailsPage({ issue }) {
   const [description, setDescription] = useState('');
   const [timeline, setTimeline] = useState('');
   const [errors, setErrors] = useState({});
+  const { user } = useSelector((state) => state.auth);
+  const [currentIndex, setCurrentIndex] = useState(0);
 
   const handleSubmit = async () => {
     let currentErrors = {};
@@ -35,6 +38,8 @@ export default function IssueDetailsPage({ issue }) {
         issueId: issue._id,
         description,
         timeline: dayjs(timeline).toISOString(),
+        ngoUsername: user.name,
+        ngoUserid: user._id,
       });
       toast.success('Request submitted successfully!');
       setShowModal(false);
@@ -46,15 +51,23 @@ export default function IssueDetailsPage({ issue }) {
     }
   };
 
+  const handleNext = () => {
+    if (currentIndex < issue.images.length - 1) {
+      setCurrentIndex(currentIndex + 1);
+    }
+  };
+
+  const handlePrevious = () => {
+    if (currentIndex > 0) {
+      setCurrentIndex(currentIndex - 1);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 p-6">
       <div className="max-w-5xl mx-auto bg-white shadow-lg rounded-xl p-8">
         <h1 className="text-3xl font-bold text-blue-700 mb-4">{issue.title}</h1>
-        <p
-          className="text-gray-700 mb-4"
-          dangerouslySetInnerHTML={{ __html: issue.content }}
-        ></p>
-
+        <p className="text-gray-700 mb-4" dangerouslySetInnerHTML={{ __html: issue.content }}></p>
 
         <div className="mb-4">
           <span className="font-semibold text-gray-800">Location:</span> {issue.issueLocation}
@@ -76,43 +89,63 @@ export default function IssueDetailsPage({ issue }) {
         </div>
 
         <div className="mb-4">
-          <span className="font-semibold text-gray-800">Tags:</span>
-          <div className="flex flex-wrap gap-2 mt-2">
-            {issue.tags.map((tag, i) => (
-              <span key={i} className="bg-blue-200 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">
-                {tag}
-              </span>
-            ))}
-          </div>
+        <span className="font-semibold text-gray-800">Tags:</span>
+        <div className="flex space-x-2 mt-2">
+          {issue.tags.map((tag, i) => (
+            <span key={i} className="bg-blue-200 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">
+              {tag}
+            </span>
+          ))}
         </div>
+      </div>
+
 
         <div className="mb-6">
           <h2 className="text-xl font-semibold mb-2">Images</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {issue.images.map((img, i) => (
-              <div key={i}>
-                <img src={img.url} alt={img.caption} className="rounded-lg shadow" />
-                <p className="text-sm text-gray-600 mt-1">{img.caption}</p>
-              </div>
-            ))}
+          <div className="relative">
+            <img
+              src={issue.images[currentIndex].url}
+              alt={issue.images[currentIndex].caption}
+              className="rounded-lg shadow w-full"
+              style={{
+                height: '300px', // Set the height you want
+                objectFit: 'contain', // This ensures the entire image is visible
+                width: '100%' // Maintain width to 100% of the container
+              }}
+            />
+            <div
+              className="absolute top-1/2 left-0 transform -translate-y-1/2 bg-gray-500 bg-opacity-50 p-2 cursor-pointer"
+              onClick={handlePrevious}
+            >
+              <span className="text-white text-lg">←</span>
+            </div>
+            <div
+              className="absolute top-1/2 right-0 transform -translate-y-1/2 bg-gray-500 bg-opacity-50 p-2 cursor-pointer"
+              onClick={handleNext}
+            >
+              <span className="text-white text-lg">→</span>
+            </div>
+            <p className="text-sm text-gray-600 mt-1 text-center">{issue.images[currentIndex].caption}</p>
           </div>
         </div>
 
         {/* Assigned To Section */}
         <div className="mb-6">
           <span className="font-semibold text-gray-800">Assigned To:</span>{' '}
-          {issue.assignedTo ? issue.assignedTo.name || 'NGO' : <span className="italic">None</span>}
+          {issue.assignedTo !== 'None' ? issue.assignedTo : <span className="italic">None</span>}
         </div>
 
         {/* Request Button */}
-        <div className="mb-6">
-          <button
-            onClick={() => setShowModal(true)}
-            className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-5 py-2 rounded-lg shadow"
-          >
-            Request This Issue
-          </button>
-        </div>
+        {issue.assignedTo === 'None' && (
+          <div className="mb-6">
+            <button
+              onClick={() => setShowModal(true)}
+              className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-5 py-2 rounded-lg shadow"
+            >
+              Request This Issue
+            </button>
+          </div>
+        )}
 
         {/* Comments */}
         <div className="mt-8">

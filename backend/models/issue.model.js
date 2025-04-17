@@ -32,8 +32,7 @@ const IssueSchema = new mongoose.Schema({
         required: true
     },
     assignedTo: {
-        type: mongoose.Schema.ObjectId,
-        ref: "User",
+        type: String,
         default: null
     },
     postedBy: {
