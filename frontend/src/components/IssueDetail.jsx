@@ -5,7 +5,8 @@ import dayjs from 'dayjs';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
-export default function IssueDetailsPage({ issue }) {
+export default function IssueDetailsPage({ issue: initialIssue }) {
+  const [issue, setIssue] = useState(initialIssue);
   const [showModal, setShowModal] = useState(false);
   const [description, setDescription] = useState('');
   const [timeline, setTimeline] = useState('');
@@ -41,10 +42,17 @@ export default function IssueDetailsPage({ issue }) {
         ngoUsername: user.name,
         ngoUserid: user._id,
       });
+
       toast.success('Request submitted successfully!');
       setShowModal(false);
       setDescription('');
       setTimeline('');
+
+      // ✅ Update assignedTo locally after successful request
+      setIssue((prev) => ({
+        ...prev,
+        assignedTo: user.name, // or user._id based on backend logic
+      }));
     } catch (err) {
       console.error(err);
       toast.error('Something went wrong while submitting the request.');
@@ -76,29 +84,30 @@ export default function IssueDetailsPage({ issue }) {
         <div className="mb-4">
           <span className="font-semibold text-gray-800">Status:</span>{' '}
           <span
-            className={`inline-block px-3 py-1 text-sm font-medium rounded-full ${
-              issue.status === 'Open'
+            className={`inline-block px-3 py-1 text-sm font-medium rounded-full ${issue.status === 'Open'
                 ? 'bg-yellow-100 text-yellow-700'
                 : issue.status === 'Assigned'
-                ? 'bg-blue-100 text-blue-700'
-                : 'bg-green-100 text-green-700'
-            }`}
+                  ? 'bg-blue-100 text-blue-700'
+                  : 'bg-green-100 text-green-700'
+              }`}
           >
             {issue.status}
           </span>
         </div>
 
         <div className="mb-4">
-        <span className="font-semibold text-gray-800">Tags:</span>
-        <div className="flex space-x-2 mt-2">
-          {issue.tags.map((tag, i) => (
-            <span key={i} className="bg-blue-200 text-blue-800 px-3 py-1 rounded-full text-sm font-medium">
-              {tag}
-            </span>
-          ))}
+          <span className="font-semibold text-gray-800">Tags:</span>
+          <div className="flex space-x-2 mt-2">
+            {issue.tags.map((tag, i) => (
+              <span
+                key={i}
+                className="bg-blue-200 text-blue-800 px-3 py-1 rounded-full text-sm font-medium"
+              >
+                {tag}
+              </span>
+            ))}
+          </div>
         </div>
-      </div>
-
 
         <div className="mb-6">
           <h2 className="text-xl font-semibold mb-2">Images</h2>
@@ -108,9 +117,9 @@ export default function IssueDetailsPage({ issue }) {
               alt={issue.images[currentIndex].caption}
               className="rounded-lg shadow w-full"
               style={{
-                height: '300px', // Set the height you want
-                objectFit: 'contain', // This ensures the entire image is visible
-                width: '100%' // Maintain width to 100% of the container
+                height: '300px',
+                objectFit: 'contain',
+                width: '100%',
               }}
             />
             <div
@@ -125,18 +134,32 @@ export default function IssueDetailsPage({ issue }) {
             >
               <span className="text-white text-lg">→</span>
             </div>
-            <p className="text-sm text-gray-600 mt-1 text-center">{issue.images[currentIndex].caption}</p>
+            <p className="text-sm text-gray-600 mt-1 text-center">
+              {issue.images[currentIndex].caption}
+            </p>
           </div>
         </div>
 
         {/* Assigned To Section */}
         <div className="mb-6">
           <span className="font-semibold text-gray-800">Assigned To:</span>{' '}
-          {issue.assignedTo !== 'None' ? issue.assignedTo : <span className="italic">None</span>}
+          {issue.assignedTo !== null ? (
+            <div>
+              <p>{issue.assignedTo}</p>
+              {issue.deadline && (
+                <p className="text-sm text-gray-600 mt-1">
+                  Deadline: {dayjs(issue.deadline).format('MMMM D, YYYY')}
+                </p>
+              )}
+            </div>
+          ) : (
+            <span className="italic">None</span>
+          )}
         </div>
 
+
         {/* Request Button */}
-        {issue.assignedTo === 'None' && (
+        {issue.assignedTo === null && (
           <div className="mb-6">
             <button
               onClick={() => setShowModal(true)}
@@ -176,7 +199,9 @@ export default function IssueDetailsPage({ issue }) {
               className="w-full border border-gray-300 rounded-lg p-2 mb-2"
               rows={3}
             />
-            {errors.description && <p className="text-red-600 text-sm mb-2">{errors.description}</p>}
+            {errors.description && (
+              <p className="text-red-600 text-sm mb-2">{errors.description}</p>
+            )}
 
             <label className="block text-sm font-medium text-gray-700 mb-1">Timeline</label>
             <input
@@ -185,7 +210,9 @@ export default function IssueDetailsPage({ issue }) {
               onChange={(e) => setTimeline(e.target.value)}
               className="w-full border border-gray-300 rounded-lg p-2 mb-2"
             />
-            {errors.timeline && <p className="text-red-600 text-sm mb-4">{errors.timeline}</p>}
+            {errors.timeline && (
+              <p className="text-red-600 text-sm mb-4">{errors.timeline}</p>
+            )}
 
             <div className="flex justify-end mt-4">
               <button
