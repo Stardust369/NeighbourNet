@@ -1,5 +1,6 @@
 import mongoose from "mongoose"
-
+import { config } from "dotenv";
+config();
 export const connectDB=async()=>{
     mongoose.connect(process.env.MONGO_URI)
     .then(()=>{
