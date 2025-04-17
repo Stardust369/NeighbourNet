@@ -76,7 +76,7 @@ export const getAllIssues = async (req, res) => {
       .find()
       .sort({ createdAt: -1 })     // newest first
       .populate("postedBy", "name"); // include reporter name
-     
+    
     return res
       .status(200)
       .json(new ApiResponse(200,  issues , "Issues fetched successfully"));
@@ -100,6 +100,21 @@ export const getIssue = async (req, res) => {
     return res.status(200).json(new ApiResponse(200, issue, "Issue fetched successfully"));
   } catch (error) {
     return res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+export const getIssueById = async (req, res) => {
+  try {
+    const issue = await Issue.findById(req.params.id);
+
+    if (!issue) {
+      return res.status(404).json({ success: false, message: 'Issue not found' });
+    }
+
+    res.status(200).json({ success: true, issue });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: 'Server error' });
   }
 };
 

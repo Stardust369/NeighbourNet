@@ -7,8 +7,8 @@ import { ToastContainer } from 'react-toastify'
 import Home from './pages/Home'
 import Login from './pages/Login'
 import Register from './pages/Register'
-import ForgotPassword from './pages/ForgotPassword'
-import Issues from './pages/Issues'
+import ForgotPassword from './pages/ForgotPassword';
+import IssueDetailsWrapper from './components/IssueDetailsWrapper';
 import OTP from './pages/OTP'
 import NGODash from './pages/NGODash'
 import ResetPassword from './pages/ResetPassword'
@@ -28,7 +28,7 @@ const App = () => {
           <Routes>
               <Route path="/" element={<Home />} />
               <Route path="/ngo-dashboard" element={<NGODash />} />
-              <Route path="/issues" element={<Issues/>} />
+              <Route path="/issues/:id" element={<IssueDetailsWrapper />} />
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
               <Route path="/password/forgot" element={<ForgotPassword />} />

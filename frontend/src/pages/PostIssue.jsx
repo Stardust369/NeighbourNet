@@ -4,9 +4,8 @@ import { app } from "../firebase";
 import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import LocationPicker from "../components/LocationPicker";
-import RichTextEditor from "../components/RichTextEditor";
-import { toast } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css'
+import ReactQuill from "react-quill";
+import "react-quill/dist/quill.snow.css";
 
 const issueTags = ["Road", "Water", "Electricity", "Education", "Health", "Sanitation"];
 
@@ -135,9 +134,6 @@ export default function PostIssue() {
         credentials: "include",
         body: JSON.stringify(body),
       });
-
-      console.log(images);
-
       if (res.ok) navigate("/issues");
       else setPublishError("Failed to post issue.");
     } catch {
@@ -208,7 +204,26 @@ export default function PostIssue() {
 
           <div>
             <label className="block font-medium mb-1">Description</label>
-            <RichTextEditor content={formData.content} onChange={handleQuillChange} />
+            <ReactQuill
+              theme="snow"
+              value={formData.content}
+              onChange={handleQuillChange}
+              placeholder="Describe the issue in detail..."
+              modules={{
+                toolbar: [
+                  [{ header: [1, 2, false] }],
+                  ['bold', 'italic', 'underline', 'strike', 'blockquote'],
+                  [{ list: 'ordered' }, { list: 'bullet' }, { indent: '-1' }, { indent: '+1' }],
+                  ['link', 'image'],
+                  ['clean'],
+                ],
+              }}
+              formats={[
+                'header', 'bold', 'italic', 'underline', 'strike', 'blockquote',
+                'list', 'bullet', 'indent', 'link', 'image',
+              ]}
+              className="bg-white"
+            />
           </div>
 
           <div>
