@@ -13,7 +13,7 @@ import ResetPassword from './pages/ResetPassword'
 import NGODashboard from './pages/NGODashboard'
 import Dash from './pages/Dash'
 import NGODashh from './pages/NGODashh'
-import Dash from './pages/Dash'
+
 import UDashBoard from './pages/UDashBoard'
 import UserDashboard from './pages/UserDashboard'
 import ClaimedIssuesPage from './components/ClaimedIssuesPage'

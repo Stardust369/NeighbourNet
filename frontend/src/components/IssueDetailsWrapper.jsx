@@ -10,7 +10,6 @@ export default function IssueDetailsWrapper() {
   const [issue, setIssue] = useState(null);
   const [loading, setLoading] = useState(true);
    const {user}= useSelector((state) => state.auth);
-
   useEffect(() => {
     const fetchIssue = async () => {
       try {
