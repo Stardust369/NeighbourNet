@@ -20,11 +20,10 @@ router.post("/verify-otp", verifyOtp);
 router.post("/login", login);
 router.get("/logout", isAuthenticated, logout);
 router.get("/profile", isAuthenticated, getUser);
+router.get('/ngos', isAuthenticated, getAllNGOs);
 router.get("/:id",getUserDetails);
 router.post("/password/forgot", forgotPassword);
 router.put("/password/reset/:token", resetPassword);
 
-// NGO routes
-router.get('/ngos', isAuthenticated, getAllNGOs);
 
 export default router;
