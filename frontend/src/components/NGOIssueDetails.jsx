@@ -140,75 +140,79 @@ export default function NGOIssueDetailsPage({ issue: initialIssue }) {
 
       {/* Volunteer Modal */}
       {showVolunteerModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md relative shadow-lg">
-            <h3 className="text-xl font-bold mb-4">Request Volunteers</h3>
+        <div className="fixed inset-0 bg-black bg-opacity-40 backdrop-blur-sm flex justify-center items-center z-50">
+          <div className="bg-white rounded-xl px-6 py-8 w-full max-w-lg shadow-2xl relative animate-fade-in-up">
+            <h3 className="text-2xl font-semibold mb-6 text-gray-800">Request Volunteers</h3>
 
             {volunteerPositions.map((position, index) => (
-              <div key={index} className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-1">Position</label>
-                <input
-                  type="text"
-                  value={position.position}
-                  onChange={(e) => handlePositionChange(index, 'position', e.target.value)}
-                  className="w-full border border-gray-300 rounded-lg p-2 mb-2"
-                  placeholder="Position name"
-                />
-                {errors[`position_${index}`] && (
-                  <p className="text-red-600 text-sm mb-2">{errors[`position_${index}`]}</p>
-                )}
+              <div key={index} className="mb-6 border border-gray-200 p-4 rounded-lg shadow-sm bg-gray-50">
+                <div className="mb-3">
+                  <label className="block text-sm font-medium text-gray-600 mb-1">Position</label>
+                  <input
+                    type="text"
+                    value={position.position}
+                    onChange={(e) => handlePositionChange(index, 'position', e.target.value)}
+                    className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="e.g. Coordinator"
+                  />
+                  {errors[`position_${index}`] && (
+                    <p className="text-red-500 text-xs mt-1">{errors[`position_${index}`]}</p>
+                  )}
+                </div>
 
-                <label className="block text-sm font-medium text-gray-700 mb-1">Number of Slots</label>
-                <input
-                  type="number"
-                  value={position.slots}
-                  onChange={(e) => handlePositionChange(index, 'slots', e.target.value)}
-                  className="w-full border border-gray-300 rounded-lg p-2 mb-2"
-                  placeholder="Number of slots"
-                />
-                {errors[`slots_${index}`] && (
-                  <p className="text-red-600 text-sm mb-2">{errors[`slots_${index}`]}</p>
-                )}
+                <div>
+                  <label className="block text-sm font-medium text-gray-600 mb-1">Number of Slots</label>
+                  <input
+                    type="number"
+                    value={position.slots}
+                    onChange={(e) => handlePositionChange(index, 'slots', e.target.value)}
+                    className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="e.g. 5"
+                  />
+                  {errors[`slots_${index}`] && (
+                    <p className="text-red-500 text-xs mt-1">{errors[`slots_${index}`]}</p>
+                  )}
+                </div>
 
-                {/* Remove Position Button */}
                 {volunteerPositions.length > 1 && (
                   <button
                     type="button"
                     onClick={() => handleRemovePosition(index)}
-                    className="text-red-600 text-sm mt-2"
+                    className="text-red-600 text-xs mt-4 hover:underline"
                   >
-                    Remove Position
+                    Remove this Position
                   </button>
                 )}
               </div>
             ))}
 
-            <div className="flex justify-between">
+            <div className="mt-4">
               <button
-                className="bg-gray-300 text-gray-800 px-4 py-2 rounded mr-2"
+                onClick={handleAddPosition}
+                className="w-full bg-green-600 text-white py-2 rounded-md hover:bg-green-700 transition"
+              >
+                ➕ Add Another Position
+              </button>
+            </div>
+            <div className="flex justify-between items-center mt-6">
+              <button
+                className="bg-gray-100 text-gray-800 px-4 py-2 rounded-md hover:bg-gray-200 transition"
                 onClick={() => setShowVolunteerModal(false)}
               >
                 Cancel
               </button>
               <button
-                className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+                className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition"
                 onClick={handleSubmitVolunteerRequest}
               >
                 Submit Request
               </button>
             </div>
 
-            <div className="mt-4">
-              <button
-                onClick={handleAddPosition}
-                className="bg-green-600 text-white px-4 py-2 rounded w-full mt-2"
-              >
-                Add Another Position
-              </button>
-            </div>
           </div>
         </div>
       )}
+
     </div>
   );
 }

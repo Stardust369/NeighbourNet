@@ -240,7 +240,7 @@ export const downvoteIssue = async (req, res, next) => {
       const claimedIssues = await Issue.find({ assignedTo: user.name }).sort({ timeline: 1 });
   
       res.status(200).json({
-        success: true,
+        success: true, 
         claimedIssues,
       });
     } catch (error) {
@@ -291,4 +291,34 @@ export const downvoteIssue = async (req, res, next) => {
       console.error(error);
       res.status(500).json({ message: "Something went wrong while processing your request." });
     }
-  };
+};
+
+export const registerVolunteer = async (req, res) => {
+  const { position } = req.body;
+  const issueId = req.params.id;
+  const userId = req.user._id;
+
+  try {
+    const issue = await Issue.findById(issueId);
+    if (!issue) return res.status(404).json({ message: 'Issue not found' });
+
+    const selected = issue.volunteerPositions.find(p => p.position === position);
+    if (!selected) return res.status(400).json({ message: 'Invalid position' });
+
+    if (selected.registeredVolunteers.includes(userId)) {
+      return res.status(409).json({ message: 'Already registered' });
+    }
+
+    if (selected.registeredVolunteers.length >= selected.slots) {
+      return res.status(400).json({ message: 'No slots left' });
+    }
+
+    selected.registeredVolunteers.push(userId);
+    await issue.save();
+
+    res.status(200).json({ message: 'Registered successfully' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Something went wrong' });
+  }
+};

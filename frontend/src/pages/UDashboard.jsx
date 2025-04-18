@@ -4,11 +4,10 @@ import { useNavigate, Outlet } from 'react-router-dom';
 import { logout } from '../redux/slices/authSlice';
 import { Menu } from 'lucide-react';
 
-
 export default function UDashBoard() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const [isSidebarOpen, setSidebarOpen] = useState(true);
+  const [isSidebarOpen, setSidebarOpen] = useState(false);
   const { user } = useSelector((state) => state.auth);
 
   const sections = ['Created Issues', 'Volunteering Oppurtunities', 'User Dashboard','Post Issue'];
@@ -37,7 +36,7 @@ export default function UDashBoard() {
       {/* Sidebar */}
       <aside
         className={`fixed top-0 left-0 h-full w-64 bg-blue-600 text-white p-6 flex flex-col transform transition-transform duration-300 ease-in-out z-40 ${
-          isSidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
+          isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
         <h2 className="text-2xl font-bold mb-8">Neighbour Net</h2>
@@ -64,15 +63,14 @@ export default function UDashBoard() {
       </aside>
 
       {/* Main content area for nested pages */}
-      <main className="flex-1 bg-gray-100 p-6 ml-0 md:ml-64 overflow-y-auto">
-  <div className="mb-6">
-    <h1 className="text-3xl font-bold text-gray-800">Welcome to Neighbour Net!</h1>
-    <p className="text-gray-600 mt-2">Your one-stop platform to raise issues, volunteer for causes, and make a difference in your neighborhood.</p>
-  </div>
+      <main className={`flex-1 bg-gray-100 p-6 transition-all duration-300 ${isSidebarOpen ? 'ml-64' : 'ml-0'}`}>
+        <div className="mb-6">
+          <h1 className="text-3xl font-bold text-gray-800">Welcome to Neighbour Net!</h1>
+          <p className="text-gray-600 mt-2">Your one-stop platform to raise issues, volunteer for causes, and make a difference in your neighborhood.</p>
+        </div>
 
-  <Outlet />
-</main>
-
+        <Outlet />
+      </main>
     </div>
   );
 }
