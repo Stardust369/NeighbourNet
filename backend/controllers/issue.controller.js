@@ -10,7 +10,6 @@ import { ApiResponse } from '../utils/ApiResponse.js';
 //Create a new issue
 export const createIssue = async (req, res) => {
   try {
-    
     const { title, tags, content, images, videos, issueLocation } = req.body;
     
     if (!title || !tags || !issueLocation) {

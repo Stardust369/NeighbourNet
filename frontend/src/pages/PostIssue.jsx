@@ -93,8 +93,10 @@ export default function PostIssue() {
     setImageUploading(false);
     setImageUploadSuccess(true);
     setTimeout(() => setImageUploadSuccess(false), 3000);
-  };
 
+    toast.success('Images uploaded successfully!');
+  };
+  
   const handleVideoUpload = async (e) => {
     const files = Array.from(e.target.files);
     if (files.length === 0) return;
@@ -105,6 +107,8 @@ export default function PostIssue() {
     setVideoUploading(false);
     setVideoUploadSuccess(true);
     setTimeout(() => setVideoUploadSuccess(false), 3000);
+    
+    toast.success('Videos uploaded successfully!');
   };
 
   const handleSubmit = async (e) => {
@@ -231,41 +235,57 @@ export default function PostIssue() {
           </div>
 
           {/* Image Upload Section */}
-          <div>
-            <label className="block font-medium mb-1">Images</label>
-            <button
-              type="button"
-              onClick={() => imageInputRef.current.click()}
-              className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-              disabled={imageUploading}
-            >
-              {imageUploading ? (
-                <span className="flex items-center">
-                  <svg className="animate-spin h-5 w-5 mr-2" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
-                  </svg>
-                  Uploading...
-                </span>
-              ) : (
-                'Upload Images'
-              )}
-            </button>
-            <input
-              ref={imageInputRef}
-              type="file"
-              accept="image/*"
-              multiple
-              hidden
-              onChange={handleImageUpload}
-            />
-            {imageUploadSuccess && (
-              <p className="text-green-600 mt-2">Images uploaded successfully!</p>
+          <div className="mb-6">
+            <div className="flex items-center justify-between mb-2">
+              <label className="block font-medium">Images</label>
+              <button
+                type="button"
+                onClick={() => imageInputRef.current.click()}
+                className="bg-blue-600 text-white px-4 py-1.5 text-sm rounded hover:bg-blue-700"
+                disabled={imageUploading}
+              >
+                {imageUploading ? (
+                  <span className="flex items-center">
+                    <svg className="animate-spin h-4 w-4 mr-1" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+                    </svg>
+                    Uploading...
+                  </span>
+                ) : (
+                  'Upload Images'
+                )}
+              </button>
+              <input
+                ref={imageInputRef}
+                type="file"
+                accept="image/*"
+                multiple
+                hidden
+                onChange={handleImageUpload}
+              />
+            </div>
+
+            {images.length > 0 && (
+              <div className="mt-4 flex flex-wrap items-center gap-2">
+                {images.map((img, idx) => (
+                  <div
+                    key={idx}
+                    className="w-20 h-20 rounded overflow-hidden border border-gray-300 shadow-sm"
+                  >
+                    <img
+                      src={img.url}
+                      alt={`uploaded-${idx}`}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                ))}
+              </div>
             )}
           </div>
 
           {/* Video Upload Section */}
-          <div>
+          <div className="flex flex-row justify-between">
             <label className="block font-medium mb-1">Videos</label>
             <button
               type="button"
@@ -292,10 +312,18 @@ export default function PostIssue() {
               multiple
               hidden
               onChange={handleVideoUpload}
-            />
-            {videoUploadSuccess && (
-              <p className="text-green-600 mt-2">Videos uploaded successfully!</p>
-            )}
+              />
+              {videos.length > 0 && (
+                <div className="mt-4 space-y-2">
+                  {videos.map((url, idx) => (
+                    <div key={idx} className="p-2 bg-gray-100 rounded shadow text-sm">
+                      <a href={url} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
+                        {decodeURIComponent(url.split('/').pop().split('?')[0])}
+                      </a>
+                    </div>
+                  ))}
+                </div>
+              )}
           </div>
 
           <button
