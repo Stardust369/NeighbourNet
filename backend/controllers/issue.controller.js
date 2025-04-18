@@ -1,11 +1,12 @@
 import Issue from '../models/issue.model.js';
+import { Task } from '../models/task.model.js';
 import { User } from '../models/user.model.js';
 // import Job from '../models/job.model.js';
 // import { Notification } from '../models/notification.model.js';
 // import { notifyIssuePicked } from './notification.controller.js';
 import { ApiError } from '../utils/ApiError.js';
 import { ApiResponse } from '../utils/ApiResponse.js';
-
+import mongoose from "mongoose";
 
 //Create a new issue
 export const createIssue = async (req, res) => {
@@ -86,6 +87,35 @@ export const getIssueByUser = async (req, res) => {
     });
   }
 };
+export const getIssuesVolunteered = async (req, res) => {
+  const { id } = req.params;
+  try {
+    const volunteeredIssues = await Issue.find({
+      "volunteerPositions.registeredVolunteers": id
+    });
+    res.status(200).json(volunteeredIssues);
+  } catch (error) {
+    console.error("Error fetching volunteered issues:", error);
+    res.status(500).json({ message: "Failed to fetch volunteered issues" });
+  }
+};
+
+export const getIssueThroughId = async (req, res) => {
+  const userId = req.params.id;
+  try {
+    const issues = await Issue.find({ _id: userId });
+    res.status(200).json({
+      success: true,
+      data: issues,
+    });
+  } catch (error) {
+    console.error('Error fetching user issues:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server Error',
+    });
+  }
+};
 //Get all issues (with optional filters)
 export const getAllIssues = async (req, res) => {
   try {
@@ -123,16 +153,44 @@ export const getIssue = async (req, res) => {
 
 export const getIssueById = async (req, res) => {
   try {
-    const issue = await Issue.findById(req.params.id);
+    const { id } = req.params;
+    const issue = await Issue.findById(id)
+      .populate("volunteerPositions.registeredVolunteers", "name email");
 
     if (!issue) {
-      return res.status(404).json({ success: false, message: 'Issue not found' });
+      return res.status(404).json({ success: false, message: "Issue not found" });
     }
 
-    res.status(200).json({ success: true, issue });
+    const issueObj = issue.toObject();
+
+    // For each volunteer position, attach tasks to each registered volunteer
+    await Promise.all(
+      issueObj.volunteerPositions.map(async (position) => {
+        position.registeredVolunteers = await Promise.all(
+          position.registeredVolunteers.map(async (volunteer) => {
+            const volunteerId = new mongoose.Types.ObjectId(volunteer._id);
+            const issueId = new mongoose.Types.ObjectId(issueObj._id);
+
+            const tasks = await Task.find(
+              { issue: issueId, assignedTo: volunteerId },
+              "description status proofSubmitted proofMessage proofImages updates"
+            ).exec();
+
+            return { ...volunteer, tasks };
+          })
+        );
+        return position;
+      })
+    );
+
+    return res.status(200).json({ success: true, issue: issueObj });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ success: false, message: 'Server error' });
+    console.error("Error fetching issue:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Server error",
+      error: error.message,
+    });
   }
 };
 
@@ -300,6 +358,8 @@ export const registerVolunteer = async (req, res) => {
 
   try {
     const issue = await Issue.findById(issueId);
+    const user= await User.findById(userId);
+    if (!user) return res.status(404).json({ message: 'User not found' });
     if (!issue) return res.status(404).json({ message: 'Issue not found' });
 
     const selected = issue.volunteerPositions.find(p => p.position === position);
@@ -312,9 +372,15 @@ export const registerVolunteer = async (req, res) => {
     if (selected.registeredVolunteers.length >= selected.slots) {
       return res.status(400).json({ message: 'No slots left' });
     }
-
+    console.log("here");
+    
     selected.registeredVolunteers.push(userId);
+    user.Issues.push({
+      issueId: issueId,
+      tasks: [],
+    });
     await issue.save();
+    await user.save();
 
     res.status(200).json({ message: 'Registered successfully' });
   } catch (err) {
@@ -423,5 +489,194 @@ export const submitFeedback = async (req, res) => {
   } catch (error) {
     console.error("Error submitting feedback:", error);
     res.status(500).json({ message: "Internal server error." });
+  }
+};
+
+
+export const assignTask = async (req, res) => {
+  const { issueId, volunteerId, task } = req.body;
+
+  try {
+    // Ensure the referenced issue and volunteer exist
+    const issue = await Issue.findById(issueId);
+    if (!issue) return res.status(404).json({ message: 'Issue not found' });
+
+    const volunteer = await User.findById(volunteerId);
+    if (!volunteer) return res.status(404).json({ message: 'Volunteer not found' });
+    
+    // Create a new task
+    const newTask = await Task.create({
+      issue: issueId,
+      assignedTo: volunteerId,
+      description: task,
+    });
+     volunteer.Issues.forEach((issue) => {
+      if (issue.issueId.toString() === issueId) {
+        issue.tasks.push(newTask._id);
+      }
+    }
+  );
+  await volunteer.save();
+    res.status(201).json({
+      message: 'Task assigned successfully',
+      task: newTask,
+    });
+  } catch (error) {
+    console.error('Error assigning task:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+};
+
+export const getMyTasks = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const { issueId } = req.params;
+
+    if (!mongoose.isValidObjectId(issueId)) {
+      return res.status(400).json({ success: false, message: 'Invalid issue ID' });
+    }
+
+    const tasks = await Task.find({
+      issue: issueId,
+      assignedTo: userId
+    })
+      .select('description status proofSubmitted')
+      .lean();
+
+    res.json({ success: true, tasks });
+  } catch (err) {
+    console.error('getMyTasks error:', err);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+};
+
+export const sendTaskUpdate = async (req, res) => {
+  try {
+    const { taskId } = req.params;
+    const userId = req.user._id;
+    const { title, content } = req.body;
+
+    if (!mongoose.isValidObjectId(taskId)) {
+      return res.status(400).json({ success: false, message: 'Invalid task ID' });
+    }
+    if (!title?.trim() || !content?.trim()) {
+      return res.status(400).json({ success: false, message: 'Title and content required' });
+    }
+
+    const task = await Task.findById(taskId);
+    if (!task) {
+      return res.status(404).json({ success: false, message: 'Task not found' });
+    }
+    if (task.assignedTo.toString() !== userId.toString()) {
+      return res.status(403).json({ success: false, message: 'Not your task' });
+    }
+
+    task.updates.push({ title, content });
+    await task.save();
+
+    res.json({ success: true, message: 'Update sent' });
+  } catch (err) {
+    console.error('sendTaskUpdate error:', err);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+};
+
+export const submitTaskProof = async (req, res) => {
+  try {
+    const { taskId } = req.params;
+    const userId = req.user._id;
+    const { message, images } = req.body;
+
+    // validate
+    if (!mongoose.isValidObjectId(taskId)) {
+      return res.status(400).json({ success: false, message: 'Invalid task ID' });
+    }
+
+    // find task
+    const task = await Task.findById(taskId);
+    if (!task) {
+      return res.status(404).json({ success: false, message: 'Task not found' });
+    }
+
+    // only assigned user may submit proof
+    if (task.assignedTo.toString() !== userId.toString()) {
+      return res.status(403).json({ success: false, message: 'Not authorized' });
+    }
+
+    // update proof fields
+
+    task.status= 'proof submitted'
+    task.proofSubmitted = true;
+    task.proofMessage = message || '';
+    task.proofImages = Array.isArray(images) ? images : [];
+    await task.save();
+
+    return res.json({ success: true, message: 'Proof submitted' });
+  } catch (err) {
+    console.error('submitTaskProof error:', err);
+    return res.status(500).json({ success: false, message: 'Server error' });
+  }
+};
+
+export const approveTaskProof = async (req, res) => {
+  try {
+    const { taskId } = req.body;
+
+    // Find the task by ID
+    const task = await Task.findById(taskId);
+    if (!task) {
+      return res.status(404).json({ message: "Task not found" });
+    }
+
+    // Approve the proof: mark task as completed
+    task.status = 'completed';
+    // Optionally, you could leave the proof fields intact or clear them
+    // For example: task.proofSubmitted = true; (it should already be true)
+    await task.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Proof approved. Task marked as completed.",
+      data: task,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+export const rejectTaskProof = async (req, res) => {
+  try {
+    console.log("here");
+    
+    const { taskId } = req.body;
+
+    // Find the task by ID
+    const task = await Task.findById(taskId);
+    if (!task) {
+      return res.status(404).json({ message: "Task not found" });
+    }
+
+    // Reject the proof: reset proofSubmitted to false,
+    // clear the proofImages and proofMessage,
+    // and keep the task status as 'pending'
+    task.proofSubmitted = false;
+    task.proofImages = [];
+    task.proofMessage = "";
+    task.status = 'pending'; // Ensuring the task remains pending
+    await task.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Proof rejected. Task remains pending. Proof has been cleared.",
+      data: task,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: error.message,
+    });
   }
 };
