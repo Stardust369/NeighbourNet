@@ -11,10 +11,14 @@ import ForgotPassword from './pages/ForgotPassword'
 import OTP from './pages/OTP'
 import ResetPassword from './pages/ResetPassword'
 import Opportunities from './pages/Opportunities'
+import Dash from './pages/Dash'
 import NGODashh from './pages/NGODashh'
 import DashBoard from './pages/DashBoard'
 import UserDashboard from './pages/UserDashboard'
 import CreatedIssues from './pages/CreatedIssues'
+import ResetPassword from './pages/ResetPassword'
+import { useDispatch, useSelector } from 'react-redux'
+import { getUser } from './redux/slices/authSlice'
 import PostIssue from './pages/PostIssue'
 import IssueDetailsWrapper from './components/IssueDetailsWrapper'
 import ClaimedIssuesPage from './components/ClaimedIssuesPage'
@@ -37,7 +41,16 @@ const App = () => {
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
-        <Route path="/dashboard/volunteering-oppurtunities" element={<Opportunities />} />
+        <Route path="/ngo-dashboard" element={<NGODashh />}>
+          <Route path="requests" element={<Dashboard />} />
+          <Route path="claimed-issues" element={<ClaimedIssuesPage />} />
+          {/* Add other routes here */}
+        </Route>
+        <Route path="/dashboard" element={<Dash />}>
+          <Route path="issues" element={<Dashboard />} />
+          <Route path="claimed-issues" element={<ClaimedIssuesPage />} />
+          {/* Add other routes here */}
+        </Route>
         <Route path="/password/forgot" element={<ForgotPassword />} />
         <Route path="/otp-verification/:email" element={<OTP />} />
         <Route path="/password/reset/:token" element={<ResetPassword />} />
@@ -59,6 +72,7 @@ const App = () => {
       </Routes>
       <ToastContainer theme='dark' />
     </Router>
+    
   );
 };
 
