@@ -9,16 +9,11 @@ const ProtectedAdminRoute = ({ children }) => {
   const [isChecking, setIsChecking] = useState(true);
 
   useEffect(() => {
-    // If Redux state is empty but we have user data in localStorage, try to fetch user data
     if (!user && !isAuthenticated && !loading) {
       const storedUser = localStorage.getItem('user');
       const userRole = localStorage.getItem('userRole');
       
-      console.log('ProtectedAdminRoute - Stored user:', storedUser);
-      console.log('ProtectedAdminRoute - Stored role:', userRole);
-      
       if (storedUser && userRole === 'admin') {
-        console.log('Found admin user in localStorage, fetching user data');
         dispatch(getUser());
       } else {
         setIsChecking(false);
@@ -28,18 +23,12 @@ const ProtectedAdminRoute = ({ children }) => {
     }
   }, [user, isAuthenticated, loading, dispatch]);
 
-  if (loading || isChecking) return null; // Optionally, render a spinner here
-
-  console.log('ProtectedAdminRoute - User:', user);
-  console.log('ProtectedAdminRoute - Is Authenticated:', isAuthenticated);
-  console.log('ProtectedAdminRoute - User Role:', user?.role);
+  if (loading || isChecking) return null;
 
   if (!isAuthenticated || !user || user.role !== 'admin') {
-    console.log('Access denied - Redirecting to login');
     return <Navigate to="/login" replace />;
   }
 
-  console.log('Access granted to admin dashboard');
   return children;
 };
 

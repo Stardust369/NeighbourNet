@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import { FaRupeeSign, FaUsers, FaBuilding, FaFilter, FaHandHoldingHeart } from 'react-icons/fa';
+import { FaRupeeSign, FaUsers, FaBuilding, FaFilter, FaHandHoldingHeart, FaSignOutAlt } from 'react-icons/fa';
 import { motion } from 'framer-motion';
 import { useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
@@ -116,8 +116,9 @@ const AdminDashboard = () => {
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
           onClick={handleLogout}
-          className="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-lg transition-colors duration-200"
+          className="bg-red-600 hover:bg-red-700 text-white px-6 py-2 flex items-center rounded-full shadow-md hover:shadow-lg transform hover:scale-105 transition-all duration-200"
         >
+          <FaSignOutAlt className="mr-2" />
           Logout
         </motion.button>
       </div>
@@ -134,13 +135,13 @@ const AdminDashboard = () => {
         <StatCard
           title="Total Users"
           value={stats.totalUsers}
-          icon={<FaUsers />}
+          icon={<FaUsers className="mr-4" />}
           color="from-green-600 to-green-400"
         />
         <StatCard
           title="Total NGOs"
           value={stats.totalNGOs}
-          icon={<FaBuilding />}
+          icon={<FaBuilding className="mr-4" />}
           color="from-purple-600 to-purple-400"
         />
       </div>

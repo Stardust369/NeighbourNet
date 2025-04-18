@@ -24,40 +24,26 @@ function Login() {
 
     const handleAdminLogin = (e) => {
         e.preventDefault();
-        console.log('Admin login attempt with:', { email, password });
-        console.log('Expected admin credentials:', { ADMIN_EMAIL, ADMIN_PASSWORD });
-        
         if (email === ADMIN_EMAIL && password === ADMIN_PASSWORD) {
-            console.log('Admin credentials match, dispatching login');
             dispatch(login({ email, password }))
                 .unwrap()
                 .then((result) => {
-                    console.log('Login successful:', result);
                     toast.success('Admin login successful!');
-                    
-                    // Force a small delay to ensure Redux state is updated
                     setTimeout(() => {
-                        console.log('Current auth state:', useSelector(state => state.auth));
                         navigate('/admin/dashboard');
                     }, 100);
                 })
                 .catch((error) => {
-                    console.error('Login error:', error);
                     toast.error(error.message || 'Login failed');
                 });
         } else {
-            console.log('Admin credentials do not match');
             toast.error('Invalid admin credentials');
         }
     }
 
     useEffect(() => {
-        console.log('Auth state changed:', { isAuthenticated, user });
-        
         if (isAuthenticated && user) {
-            console.log('User authenticated:', user);
             if (user.role === 'admin') {
-                console.log('Redirecting to admin dashboard');
                 navigate('/admin/dashboard');
             } else if (user.role === 'NGO') {
                 navigate('/ngo-dashboard');

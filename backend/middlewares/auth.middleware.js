@@ -30,9 +30,7 @@ export const isAuthenticated = async(req, res, next) => {
 export const protect = isAuthenticated;
 
 export const isAdmin = (req, res, next) => {
-  console.log('isAdmin middleware - User:', req.user);
-  console.log('isAdmin middleware - User role:', req.user?.role);
-  
+
   if (!req.user || req.user.role !== 'admin') {
     console.log('Admin access denied');
     return res.status(403).json({ message: 'Admin access only' });

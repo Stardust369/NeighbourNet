@@ -45,15 +45,12 @@ const authSlice = createSlice({
             state.message = null;
         },
         loginSuccess(state, action) {
-            console.log('loginSuccess reducer called with:', action.payload);
             state.loading = false;
             state.isAuthenticated = true;
             state.user = action.payload.user;
             state.message = action.payload.message;
             state.error = null;
-            // Store user role in localStorage for easy access
             localStorage.setItem('userRole', action.payload.user.role);
-            // Store user data in localStorage
             localStorage.setItem('user', JSON.stringify(action.payload.user));
         },
         loginFailed(state, action) {
@@ -170,20 +167,16 @@ export const login = createAsyncThunk(
   'auth/login',
   async ({ email, password }, { rejectWithValue, dispatch }) => {
     try {
-      console.log('Login attempt with:', { email });
       const response = await axios.post(
         `${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/api/v1/auth/login`,
         { email, password },
         { withCredentials: true }
       );
-      console.log('Login response:', response.data);
       
-      // Manually dispatch loginSuccess to ensure state is updated
       dispatch(authSlice.actions.loginSuccess(response.data));
       
       return response.data;
     } catch (error) {
-      console.error('Login error:', error.response?.data || error.message);
       return rejectWithValue(error.response?.data || { message: 'Login failed' });
     }
   }
