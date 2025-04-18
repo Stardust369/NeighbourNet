@@ -6,6 +6,7 @@ import {
   getIssueById,
   getIssueByUser,
   submitVolunteerRequest,
+  registerVolunteer,
 } from "../controllers/issue.controller.js";
 import { isAuthenticated } from "../middlewares/auth.middleware.js";
 
@@ -16,6 +17,7 @@ router.get("/getAll", getAllIssues);
 router.get("/users/:id",getIssueByUser);
 router.get('/:id', getIssueById);
 router.get('/claimed/:userId', getClaimedIssuesByUser); // Assuming you want to get issues by userId as well
-router.post('/submitVolunteerRequest',submitVolunteerRequest)
+router.post('/submitVolunteerRequest', submitVolunteerRequest)
+router.post('/:id/registerVolunteer', isAuthenticated, registerVolunteer)
 
 export default router;
