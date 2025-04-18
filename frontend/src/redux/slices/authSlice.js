@@ -1,4 +1,4 @@
-import { createSlice } from "@reduxjs/toolkit";
+import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
 
 const authSlice = createSlice({
@@ -45,10 +45,14 @@ const authSlice = createSlice({
             state.message = null;
         },
         loginSuccess(state, action) {
+            console.log('loginSuccess reducer called with:', action.payload);
             state.loading = false;
-            state.message = action.payload.message;
             state.isAuthenticated = true;
             state.user = action.payload.user;
+            state.message = action.payload.message;
+            state.error = null;
+            // Store user role in localStorage for easy access
+            localStorage.setItem('userRole', action.payload.user.role);
             // Store user data in localStorage
             localStorage.setItem('user', JSON.stringify(action.payload.user));
         },
@@ -162,30 +166,28 @@ export const otpVerification = (email, otp) => async (dispatch) => {
         });
 };
 
-export const login = (data) => async (dispatch) => {
-    dispatch(authSlice.actions.loginRequest());
+export const login = createAsyncThunk(
+  'auth/login',
+  async ({ email, password }, { rejectWithValue, dispatch }) => {
     try {
-        const response = await axios.post(
-            "http://localhost:3000/api/v1/auth/login", 
-            data, 
-            {
-                withCredentials: true,
-                headers: {
-                    "Content-Type": "application/json",
-                },
-            }
-        );
-        dispatch(authSlice.actions.loginSuccess(response.data));
+      console.log('Login attempt with:', { email });
+      const response = await axios.post(
+        `${import.meta.env.VITE_API_URL || 'http://localhost:3000'}/api/v1/auth/login`,
+        { email, password },
+        { withCredentials: true }
+      );
+      console.log('Login response:', response.data);
+      
+      // Manually dispatch loginSuccess to ensure state is updated
+      dispatch(authSlice.actions.loginSuccess(response.data));
+      
+      return response.data;
     } catch (error) {
-        console.error("Login error:", error.response?.data);
-        // Check if the error message indicates user not found
-        if (error.response?.data?.msg === "User not found") {
-            window.location.href = "/register";
-            return;
-        }
-        dispatch(authSlice.actions.loginFailed(error.response?.data?.msg || "Login failed"));
+      console.error('Login error:', error.response?.data || error.message);
+      return rejectWithValue(error.response?.data || { message: 'Login failed' });
     }
-};
+  }
+);
 
 export const logout = () => async (dispatch) => {
     try {

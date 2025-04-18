@@ -3,6 +3,7 @@ import './App.css'
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 import { ToastContainer } from 'react-toastify'
 import { useDispatch, useSelector } from 'react-redux'
+import ProtectedAdminRoute from './components/ProtectedAdminRoute'
 
 import Home from './pages/Home'
 import Login from './pages/Login'
@@ -28,6 +29,7 @@ import Donations from './pages/Donations'
 import NGODonations from './components/NGODonations'
 import PaymentSuccess from './pages/PaymentSuccess'
 import PaymentCancel from './pages/PaymentCancel'
+import AdminDashboard from './pages/AdminDashboard'
 
 const App = () => {
   const { user, isAuthenticated } = useSelector((state) => state.auth)
@@ -66,6 +68,12 @@ const App = () => {
           <Route path="claimed-issues" element={<ClaimedIssuesPage />} />
           <Route path="donations" element={<NGODonations />} />
         </Route>
+
+        <Route path="/admin/dashboard" element={
+          <ProtectedAdminRoute>
+            <AdminDashboard />
+          </ProtectedAdminRoute>
+        } />
       </Routes>
       <ToastContainer />
     </Router>

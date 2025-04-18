@@ -3,6 +3,7 @@ import { useDispatch, useSelector } from 'react-redux'
 import { Link, Navigate, useNavigate } from 'react-router-dom'
 import { login, resetAuthSlice } from '../redux/slices/authSlice'
 import { Eye, EyeOff } from 'lucide-react'
+import { toast } from 'react-toastify'
 
 function Login() {
     const [email, setEmail] = useState("")
@@ -11,25 +12,63 @@ function Login() {
     const dispatch = useDispatch()
     const navigate = useNavigate()
 
-    const { loading, error, message, user, isAuthenticated } = useSelector(state => state.auth)
+    const { loading, error, user, isAuthenticated } = useSelector(state => state.auth)
+
+    const ADMIN_EMAIL = import.meta.env.VITE_ADMIN_EMAIL;
+    const ADMIN_PASSWORD = import.meta.env.VITE_ADMIN_PASSWORD;
 
     const handleLogin = (e) => {
         e.preventDefault()
-        const data = {
-            email,
-            password
+        dispatch(login({ email, password }))
+    }
+
+    const handleAdminLogin = (e) => {
+        e.preventDefault();
+        console.log('Admin login attempt with:', { email, password });
+        console.log('Expected admin credentials:', { ADMIN_EMAIL, ADMIN_PASSWORD });
+        
+        if (email === ADMIN_EMAIL && password === ADMIN_PASSWORD) {
+            console.log('Admin credentials match, dispatching login');
+            dispatch(login({ email, password }))
+                .unwrap()
+                .then((result) => {
+                    console.log('Login successful:', result);
+                    toast.success('Admin login successful!');
+                    
+                    // Force a small delay to ensure Redux state is updated
+                    setTimeout(() => {
+                        console.log('Current auth state:', useSelector(state => state.auth));
+                        navigate('/admin/dashboard');
+                    }, 100);
+                })
+                .catch((error) => {
+                    console.error('Login error:', error);
+                    toast.error(error.message || 'Login failed');
+                });
+        } else {
+            console.log('Admin credentials do not match');
+            toast.error('Invalid admin credentials');
         }
-        dispatch(login(data))
     }
 
     useEffect(() => {
-        if (message) {
-            user?.role === 'Admin' ? navigate("/admin/dashboard") : navigate("/")
+        console.log('Auth state changed:', { isAuthenticated, user });
+        
+        if (isAuthenticated && user) {
+            console.log('User authenticated:', user);
+            if (user.role === 'admin') {
+                console.log('Redirecting to admin dashboard');
+                navigate('/admin/dashboard');
+            } else if (user.role === 'NGO') {
+                navigate('/ngo-dashboard');
+            } else {
+                navigate('/dashboard/user-dashboard');
+            }
         }
         if (error) {
-            dispatch(resetAuthSlice())
+            dispatch(resetAuthSlice());
         }
-    }, [dispatch, isAuthenticated, error, loading])
+    }, [isAuthenticated, user, error, dispatch, navigate]);
 
     if (isAuthenticated) {
         return <Navigate to="/" />
@@ -80,8 +119,8 @@ function Login() {
                     </button>
                     <button
                         type="button"
-                        onClick={() => navigate("/admin/login")}
-                        className="w-full mt-3 border border-black text-black py-2 rounded-md hover:bg-black hover:text-white transition"
+                        onClick={handleAdminLogin}
+                        className="w-full mt-2 bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded"
                     >
                         Admin Login
                     </button>
