@@ -25,6 +25,10 @@ export default function IssueDetailsWrapper() {
     fetchIssue();
   }, [id]);
 
+  console.log(issue);
+  console.log(user);
+  
+
   if (loading) return <p>Loading...</p>;
   if (!issue) return <p>Issue not found</p>;
   if(issue.assignedTo=== user.name){

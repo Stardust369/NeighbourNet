@@ -10,6 +10,15 @@ export default function NGOIssueDetailsPage({ issue: initialIssue }) {
     const [volunteerPositions, setVolunteerPositions] = useState([{ position: '', slots: '' }]);
     const { user } = useSelector((state) => state.auth);
     const [errors, setErrors] = useState({});
+    const [showTaskModal, setShowTaskModal] = useState(false);
+    const [selectedVolunteer, setSelectedVolunteer] = useState(null);
+    const [taskDescription, setTaskDescription] = useState("");
+
+    // New state for proof and updates modals
+    const [showProofModal, setShowProofModal] = useState(false);
+    const [selectedTaskForProof, setSelectedTaskForProof] = useState(null);
+    const [showUpdatesModal, setShowUpdatesModal] = useState(false);
+    const [selectedTaskForUpdates, setSelectedTaskForUpdates] = useState(null);
 
     const handleAddPosition = () => {
         setVolunteerPositions([...volunteerPositions, { position: '', slots: '' }]);
@@ -45,7 +54,7 @@ export default function NGOIssueDetailsPage({ issue: initialIssue }) {
         setErrors({});
 
         try {
-            const res = await axios.post('http://localhost:3000/api/v1/issues/submitVolunteerRequest', {
+            await axios.post('http://localhost:3000/api/v1/issues/submitVolunteerRequest', {
                 issueId: issue._id,
                 volunteerPositions,
                 ngoUsername: user.name,
@@ -61,10 +70,31 @@ export default function NGOIssueDetailsPage({ issue: initialIssue }) {
         }
     };
 
+    const openTaskModal = (volunteer) => {
+        setSelectedVolunteer(volunteer);
+        setTaskDescription("");
+        setShowTaskModal(true);
+    };
+
+    const handleAssignTask = async () => {
+        try {
+            await axios.post("http://localhost:3000/api/v1/issues/assignTask", {
+                issueId: issue._id,
+                volunteerId: selectedVolunteer._id,
+                task: taskDescription,
+            });
+            toast.success("Task assigned successfully!");
+            setShowTaskModal(false);
+        } catch (err) {
+            console.error(err);
+            toast.error("Failed to assign task.");
+        }
+    };
+
     const handleDisclaimIssue = async () => {
         try {
             await axios.post(
-                `http://localhost:3000/api/v1/issues/disclaim`,
+                "http://localhost:3000/api/v1/issues/disclaim",
                 { issueId: issue._id },
                 { withCredentials: true }
             );
@@ -79,7 +109,7 @@ export default function NGOIssueDetailsPage({ issue: initialIssue }) {
     const handleMarkAsCompleted = async () => {
         try {
             await axios.post(
-                `http://localhost:3000/api/v1/issues/complete`,
+                "http://localhost:3000/api/v1/issues/complete",
                 { issueId: issue._id },
                 { withCredentials: true }
             );
@@ -89,6 +119,48 @@ export default function NGOIssueDetailsPage({ issue: initialIssue }) {
             console.error(error);
             toast.error('Failed to mark issue as completed.');
         }
+    };
+
+    // New: handle accept/reject proof
+    const handleAcceptProof = async (taskId) => {
+        try {
+            await axios.post('http://localhost:3000/api/v1/issues/acceptTaskProof', {
+                issueId: issue._id,
+                taskId,
+            });
+            toast.success('Task completion proof accepted.');
+            setShowProofModal(false);
+            // Optionally refresh the issue/task data here
+        } catch (err) {
+            console.error(err);
+            toast.error('Failed to accept proof.');
+        }
+    };
+
+    const handleRejectProof = async (taskId) => {
+        try {
+            await axios.post('http://localhost:3000/api/v1/issues/rejectTaskProof', {
+                issueId: issue._id,
+                taskId,
+            });
+            toast.success('Task completion proof rejected.');
+            setShowProofModal(false);
+            // Optionally refresh the issue/task data here
+        } catch (err) {
+            console.error(err);
+            toast.error('Failed to reject proof.');
+        }
+    };
+
+    // Open modals for proof and updates
+    const openProofModal = (task) => {
+        setSelectedTaskForProof(task);
+        setShowProofModal(true);
+    };
+
+    const openUpdatesModal = (task) => {
+        setSelectedTaskForUpdates(task);
+        setShowUpdatesModal(true);
     };
 
     return (
@@ -103,14 +175,12 @@ export default function NGOIssueDetailsPage({ issue: initialIssue }) {
 
                 <div className="mb-4">
                     <span className="font-semibold text-gray-800">Status:</span>{' '}
-                    <span
-                        className={`inline-block px-3 py-1 text-sm font-medium rounded-full ${issue.status === 'Open'
+                    <span className={`inline-block px-3 py-1 text-sm font-medium rounded-full ${issue.status === 'Open'
                             ? 'bg-yellow-100 text-yellow-700'
                             : issue.status === 'Assigned'
                                 ? 'bg-blue-100 text-blue-700'
                                 : 'bg-green-100 text-green-700'
-                            }`}
-                    >
+                        }`}>
                         {issue.status}
                     </span>
                 </div>
@@ -123,18 +193,13 @@ export default function NGOIssueDetailsPage({ issue: initialIssue }) {
                                 src={issue.images[0]?.url}
                                 alt={issue.images[0]?.caption || 'Issue Image'}
                                 className="rounded-lg shadow w-full"
-                                style={{
-                                    height: '300px',
-                                    objectFit: 'contain',
-                                    width: '100%',
-                                }}
+                                style={{ height: '300px', objectFit: 'contain', width: '100%' }}
                             />
                             <p className="text-sm text-gray-600 mt-1 text-center">{issue.images[0]?.caption}</p>
                         </div>
                     </div>
                 )}
 
-                {/* Display Volunteer Positions if any */}
                 {issue.volunteerPositions && issue.volunteerPositions.length > 0 && (
                     <div className="mb-6">
                         <h2 className="text-xl font-semibold mb-2">Volunteer Positions</h2>
@@ -146,16 +211,63 @@ export default function NGOIssueDetailsPage({ issue: initialIssue }) {
                                 <div className="text-sm font-medium text-gray-700">
                                     <span className="font-semibold">Slots Available:</span> {position.slots}
                                 </div>
-                                <div className="text-sm font-medium text-gray-700">
-                                    <span className="font-semibold">Registered Volunteers:</span> {position.registeredVolunteers.length}
+                                <div className="text-sm font-medium text-gray-700 mb-2">
+                                    <span className="font-semibold">Registered Volunteers:</span>
+                                    {position.registeredVolunteers.map((volunteer, i) => (
+                                        <div key={i} className="flex flex-col bg-gray-100 px-3 py-2 rounded mt-1">
+                                            <div className="flex justify-between items-center">
+                                                <span className="text-sm text-gray-700 font-medium">{volunteer.name}</span>
+                                                <button
+                                                    className="text-blue-600 text-xs font-medium hover:underline"
+                                                    onClick={() => openTaskModal(volunteer)}
+                                                >
+                                                    Assign Task
+                                                </button>
+                                            </div>
+                                            {volunteer.tasks && volunteer.tasks.length > 0 ? (
+                                                <div className="mt-2 space-y-2">
+                                                    {volunteer.tasks.map((task, taskIdx) => (
+                                                        <div key={taskIdx} className="bg-white p-2 rounded shadow text-sm">
+                                                            <p className="text-gray-800"><span className="font-medium">Task:</span> {task.description}</p>
+                                                            <p className="text-gray-600"><span className="font-medium">Status:</span> {task.status}</p>
+                                                            {task.status === "proof submitted" && (
+                                                                <div className="flex gap-2 mt-2">
+                                                                    <button
+                                                                        className="bg-blue-500 text-white px-3 py-1 rounded text-xs hover:bg-blue-600"
+                                                                        onClick={() => openProofModal(task)}
+                                                                    >
+                                                                        View Task Completion Proof
+                                                                    </button>
+                                                                    <button
+                                                                        className="bg-gray-500 text-white px-3 py-1 rounded text-xs hover:bg-gray-600"
+                                                                        onClick={() => openUpdatesModal(task)}
+                                                                    >
+                                                                        View Task Updates
+                                                                    </button>
+                                                                </div>
+                                                            )}
+                                                            {task.status !== "proof submitted" && (
+                                                                <button
+                                                                    className="bg-gray-500 text-white px-3 py-1 rounded text-xs hover:bg-gray-600 mt-2"
+                                                                    onClick={() => openUpdatesModal(task)}
+                                                                >
+                                                                    View Task Updates
+                                                                </button>
+                                                            )}
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            ) : (
+                                                <p className="text-sm text-gray-500 mt-1">No tasks assigned yet.</p>
+                                            )}
+                                        </div>
+                                    ))}
                                 </div>
                             </div>
                         ))}
                     </div>
                 )}
 
-                {/* Request Volunteer Button */}
-                {/* Show Request Volunteer Button only if issue is assigned */}
                 {issue.status === 'Assigned' && (
                     <div className="mb-6">
                         <button
@@ -167,8 +279,6 @@ export default function NGOIssueDetailsPage({ issue: initialIssue }) {
                     </div>
                 )}
 
-
-                {/* Disclaim / Complete Buttons */}
                 {issue.status === 'Assigned' && issue.assignedTo === user.name && (
                     <div className="flex flex-col sm:flex-row gap-4 mb-6">
                         <button
@@ -192,7 +302,6 @@ export default function NGOIssueDetailsPage({ issue: initialIssue }) {
                 <div className="fixed inset-0 bg-black bg-opacity-40 backdrop-blur-sm flex justify-center items-center z-50">
                     <div className="bg-white rounded-xl px-6 py-8 w-full max-w-lg shadow-2xl relative animate-fade-in-up">
                         <h3 className="text-2xl font-semibold mb-6 text-gray-800">Request Volunteers</h3>
-
                         {volunteerPositions.map((position, index) => (
                             <div key={index} className="mb-6 border border-gray-200 p-4 rounded-lg shadow-sm bg-gray-50">
                                 <div className="mb-3">
@@ -204,11 +313,8 @@ export default function NGOIssueDetailsPage({ issue: initialIssue }) {
                                         className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                                         placeholder="e.g. Coordinator"
                                     />
-                                    {errors[`position_${index}`] && (
-                                        <p className="text-red-500 text-xs mt-1">{errors[`position_${index}`]}</p>
-                                    )}
+                                    {errors[`position_${index}`] && <p className="text-red-500 text-xs mt-1">{errors[`position_${index}`]}</p>}
                                 </div>
-
                                 <div>
                                     <label className="block text-sm font-medium text-gray-600 mb-1">Number of Slots</label>
                                     <input
@@ -218,11 +324,8 @@ export default function NGOIssueDetailsPage({ issue: initialIssue }) {
                                         className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                                         placeholder="e.g. 5"
                                     />
-                                    {errors[`slots_${index}`] && (
-                                        <p className="text-red-500 text-xs mt-1">{errors[`slots_${index}`]}</p>
-                                    )}
+                                    {errors[`slots_${index}`] && <p className="text-red-500 text-xs mt-1">{errors[`slots_${index}`]}</p>}
                                 </div>
-
                                 {volunteerPositions.length > 1 && (
                                     <button
                                         type="button"
@@ -234,7 +337,6 @@ export default function NGOIssueDetailsPage({ issue: initialIssue }) {
                                 )}
                             </div>
                         ))}
-
                         <div className="mt-4">
                             <button
                                 onClick={handleAddPosition}
@@ -257,10 +359,123 @@ export default function NGOIssueDetailsPage({ issue: initialIssue }) {
                                 Submit Request
                             </button>
                         </div>
-
                     </div>
                 </div>
             )}
+
+            {/* Task Assign Modal */}
+            {showTaskModal && selectedVolunteer && (
+                <div className="fixed inset-0 bg-black bg-opacity-40 backdrop-blur-sm flex justify-center items-center z-50">
+                    <div className="bg-white rounded-xl px-6 py-6 w-full max-w-md shadow-2xl relative">
+                        <h3 className="text-xl font-semibold mb-4">Assign Task to {selectedVolunteer.name}</h3>
+                        <textarea
+                            value={taskDescription}
+                            onChange={(e) => setTaskDescription(e.target.value)}
+                            rows="4"
+                            placeholder="Describe the task..."
+                            className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                        <div className="flex justify-end mt-4 gap-3">
+                            <button
+                                className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300"
+                                onClick={() => setShowTaskModal(false)}
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                                onClick={handleAssignTask}
+                            >
+                                Assign
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Task Completion Proof Modal */}
+            {showProofModal && selectedTaskForProof && (
+                <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center z-50">
+                    <div className="bg-white rounded-lg p-6 w-full max-w-md relative shadow-lg">
+                        <h3 className="text-xl font-bold mb-4">Task Completion Proof</h3>
+                        <div className="mb-2">
+                            <span className="font-semibold text-gray-700">Proof Message:</span>
+                            <p className="text-gray-800 mt-2">{selectedTaskForProof.proofMessage}</p>
+                        </div>
+                        {selectedTaskForProof.proofImages && selectedTaskForProof.proofImages.length > 0 && (
+                            <div className="mb-4">
+                                <span className="font-semibold text-gray-700">Proof Images:</span>
+                                <div className="flex flex-wrap gap-2 mt-2">
+                                    {selectedTaskForProof.proofImages.map((img, idx) => (
+                                        <img
+                                            key={idx}
+                                            src={img}
+                                            alt={`Proof ${idx + 1}`}
+                                            className="w-24 h-24 object-cover rounded"
+                                        />
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+                        <div className="flex justify-end gap-3 mt-4">
+                            <button
+                                className="bg-gray-300 text-gray-800 px-4 py-2 rounded"
+                                onClick={() => setShowProofModal(false)}
+                            >
+                                Close
+                            </button>
+                            <button
+                                className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
+                                onClick={() => handleAcceptProof(selectedTaskForProof._id)}
+                            >
+                                Accept
+                            </button>
+                            <button
+                                className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700"
+                                onClick={() => handleRejectProof(selectedTaskForProof._id)}
+                            >
+                                Reject
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Task Updates Modal */}
+            {/* Task Updates Modal */}
+            {showUpdatesModal && selectedTaskForUpdates && (
+                <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center z-50">
+                    <div className="bg-white rounded-lg p-6 w-full max-w-md relative shadow-lg">
+                        <h3 className="text-xl font-bold mb-4">Task Updates</h3>
+                        {selectedTaskForUpdates.updates && selectedTaskForUpdates.updates.length > 0 ? (
+                            <ul className="space-y-2">
+                                {selectedTaskForUpdates.updates.map((update, idx) => (
+                                    <li key={idx} className="border-b pb-2">
+                                        <div className="font-semibold text-blue-700">{update.title}</div>
+                                        <div className="text-gray-800">{update.content}</div>
+                                        <div className="text-xs text-gray-500">
+                                            {update.createdAt
+                                                ? new Date(update.createdAt).toLocaleString()
+                                                : ""}
+                                        </div>
+                                    </li>
+                                ))}
+                            </ul>
+                        ) : (
+                            <p className="text-gray-500">No updates available for this task.</p>
+                        )}
+                        <div className="flex justify-end mt-4">
+                            <button
+                                className="bg-gray-300 text-gray-800 px-4 py-2 rounded"
+                                onClick={() => setShowUpdatesModal(false)}
+                            >
+                                Close
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
         </div>
     );
 }
