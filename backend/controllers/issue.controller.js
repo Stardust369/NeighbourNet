@@ -86,6 +86,35 @@ export const getIssueByUser = async (req, res) => {
     });
   }
 };
+export const getIssuesVolunteered = async (req, res) => {
+  const { id } = req.params;
+  try {
+    const volunteeredIssues = await Issue.find({
+      "volunteerPositions.registeredVolunteers": id
+    });
+    res.status(200).json(volunteeredIssues);
+  } catch (error) {
+    console.error("Error fetching volunteered issues:", error);
+    res.status(500).json({ message: "Failed to fetch volunteered issues" });
+  }
+};
+
+export const getIssueThroughId = async (req, res) => {
+  const userId = req.params.id;
+  try {
+    const issues = await Issue.find({ _id: userId });
+    res.status(200).json({
+      success: true,
+      data: issues,
+    });
+  } catch (error) {
+    console.error('Error fetching user issues:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server Error',
+    });
+  }
+};
 //Get all issues (with optional filters)
 export const getAllIssues = async (req, res) => {
   try {
