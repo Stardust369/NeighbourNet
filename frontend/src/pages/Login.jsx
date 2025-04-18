@@ -2,10 +2,12 @@ import React, { useEffect, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { Link, Navigate, useNavigate } from 'react-router-dom'
 import { login, resetAuthSlice } from '../redux/slices/authSlice'
+import { Eye, EyeOff } from 'lucide-react'
 
 function Login() {
     const [email, setEmail] = useState("")
     const [password, setPassword] = useState("")
+    const [showPassword, setShowPassword] = useState(false)
     const dispatch = useDispatch()
     const navigate = useNavigate()
 
@@ -13,9 +15,10 @@ function Login() {
 
     const handleLogin = (e) => {
         e.preventDefault()
-        const data = new FormData()
-        data.append('email', email)
-        data.append('password', password)
+        const data = {
+            email,
+            password
+        }
         dispatch(login(data))
     }
 
@@ -47,15 +50,22 @@ function Login() {
                             className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none"
                         />
                     </div>
-                    <div className="mb-4">
+                    <div className="mb-4 relative">
                         <input
-                            type="password"
+                            type={showPassword ? "text" : "password"}
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
                             placeholder="Password"
                             required
                             className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none"
                         />
+                        <button
+                            type="button"
+                            onClick={() => setShowPassword(!showPassword)}
+                            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                        >
+                            {showPassword ? <Eye size={18} /> : <EyeOff size={18} />}
+                        </button>
                     </div>
                     <div className="mb-4 text-sm text-right">
                         <Link to="/password/forgot" className="text-gray-600 hover:underline">

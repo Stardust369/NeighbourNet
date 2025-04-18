@@ -6,6 +6,7 @@ import { useSelector } from "react-redux";
 import LocationPicker from "../components/LocationPicker";
 import ReactQuill from "react-quill";
 import "react-quill/dist/quill.snow.css";
+import { toast } from "react-hot-toast";
 
 const issueTags = ["Road", "Water", "Electricity", "Education", "Health", "Sanitation"];
 
@@ -111,6 +112,14 @@ export default function PostIssue() {
     toast.success('Videos uploaded successfully!');
   };
 
+  const handleRemoveImage = (indexToRemove) => {
+    setImages((prev) => prev.filter((_, index) => index !== indexToRemove));
+  };
+
+  const handleRemoveVideo = (indexToRemove) => {
+    setVideos((prev) => prev.filter((_, index) => index !== indexToRemove));
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!formData.title || formData.tags.length === 0 || !formData.content || !formData.issueLocation) {
@@ -134,10 +143,17 @@ export default function PostIssue() {
         credentials: "include",
         body: JSON.stringify(body),
       });
-      if (res.ok) navigate("/dashboard");
-      else setPublishError("Failed to post issue.");
-    } catch {
-      setPublishError("Something went wrong.");
+      
+      if (res.ok) {
+        toast.success("Issue posted successfully!");
+        navigate("/dashboard/created-issues"); // Navigate to Created Issues section
+      } else {
+        const data = await res.json();
+        setPublishError(data.message || "Failed to post issue.");
+      }
+    } catch (error) {
+      console.error("Error posting issue:", error);
+      setPublishError("Something went wrong. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
@@ -271,13 +287,22 @@ export default function PostIssue() {
                 {images.map((img, idx) => (
                   <div
                     key={idx}
-                    className="w-20 h-20 rounded overflow-hidden border border-gray-300 shadow-sm"
+                    className="relative w-20 h-20 rounded overflow-hidden border border-gray-300 shadow-sm group"
                   >
                     <img
                       src={img.url}
                       alt={`uploaded-${idx}`}
                       className="w-full h-full object-cover"
                     />
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveImage(idx)}
+                      className="absolute top-0 right-0 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                      </svg>
+                    </button>
                   </div>
                 ))}
               </div>
@@ -285,45 +310,56 @@ export default function PostIssue() {
           </div>
 
           {/* Video Upload Section */}
-          <div className="flex flex-row justify-between">
-            <label className="block font-medium mb-1">Videos</label>
-            <button
-              type="button"
-              onClick={() => videoInputRef.current.click()}
-              className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-              disabled={videoUploading}
-            >
-              {videoUploading ? (
-                <span className="flex items-center">
-                  <svg className="animate-spin h-5 w-5 mr-2" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
-                  </svg>
-                  Uploading...
-                </span>
-              ) : (
-                'Upload Videos'
-              )}
-            </button>
-            <input
-              ref={videoInputRef}
-              type="file"
-              accept="video/*"
-              multiple
-              hidden
-              onChange={handleVideoUpload}
+          <div className="flex flex-col">
+            <div className="flex items-center justify-between mb-2">
+              <label className="block font-medium">Videos</label>
+              <button
+                type="button"
+                onClick={() => videoInputRef.current.click()}
+                className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+                disabled={videoUploading}
+              >
+                {videoUploading ? (
+                  <span className="flex items-center">
+                    <svg className="animate-spin h-5 w-5 mr-2" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
+                    </svg>
+                    Uploading...
+                  </span>
+                ) : (
+                  'Upload Videos'
+                )}
+              </button>
+              <input
+                ref={videoInputRef}
+                type="file"
+                accept="video/*"
+                multiple
+                hidden
+                onChange={handleVideoUpload}
               />
-              {videos.length > 0 && (
-                <div className="mt-4 space-y-2">
-                  {videos.map((url, idx) => (
-                    <div key={idx} className="p-2 bg-gray-100 rounded shadow text-sm">
-                      <a href={url} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
-                        {decodeURIComponent(url.split('/').pop().split('?')[0])}
-                      </a>
-                    </div>
-                  ))}
-                </div>
-              )}
+            </div>
+            {videos.length > 0 && (
+              <div className="mt-4 space-y-2">
+                {videos.map((video, idx) => (
+                  <div key={idx} className="flex items-center justify-between p-2 bg-gray-100 rounded shadow text-sm">
+                    <a href={video.url} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
+                      {decodeURIComponent(video.url.split('/').pop().split('?')[0])}
+                    </a>
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveVideo(idx)}
+                      className="ml-2 text-red-500 hover:text-red-700"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                      </svg>
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           <button
