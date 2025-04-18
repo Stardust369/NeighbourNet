@@ -3,6 +3,7 @@ import './App.css'
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
 import { ToastContainer } from 'react-toastify'
 import { useDispatch, useSelector } from 'react-redux'
+import ProtectedAdminRoute from './components/ProtectedAdminRoute'
 
 import Home from './pages/Home'
 import Login from './pages/Login'
@@ -28,6 +29,7 @@ import Donations from './pages/Donations'
 import NGODonations from './components/NGODonations'
 import PaymentSuccess from './pages/PaymentSuccess'
 import PaymentCancel from './pages/PaymentCancel'
+import AdminDashboard from './pages/AdminDashboard'
 
 import Events from './pages/Events'
 import CreateEvent from './pages/CreateEvent'
@@ -82,6 +84,12 @@ const App = () => {
           <Route path="created-events" element={<CreatedEvents />} />
           <Route path="events/:id/edit" element={<CreateEvent />} />
         </Route>
+
+        <Route path="/admin/dashboard" element={
+          <ProtectedAdminRoute>
+            <AdminDashboard />
+          </ProtectedAdminRoute>
+        } />
       </Routes>
       <ToastContainer />
     </Router>
