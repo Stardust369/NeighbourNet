@@ -322,3 +322,106 @@ export const registerVolunteer = async (req, res) => {
     res.status(500).json({ message: 'Something went wrong' });
   }
 };
+
+export const disclaimIssue = async (req, res) => {
+  try {
+    const { issueId } = req.body;
+
+    if (!issueId) {
+      return res.status(400).json({ success: false, message: 'Issue ID is required' });
+    }
+
+    const issue = await Issue.findById(issueId);
+    if (!issue) {
+      return res.status(404).json({ success: false, message: 'Issue not found' });
+    }
+
+    issue.status = 'Open';
+    issue.assignedTo = null;
+    issue.volunteerPositions = [];
+
+    await issue.save();
+
+    return res.status(200).json({
+      success: true,
+      message: 'Issue disclaimed successfully',
+      updatedIssue: issue,
+    });
+  } catch (error) {
+    console.error('Error disclaiming issue:', error);
+    return res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+};
+export const markIssueAsCompleted = async (req, res) => {
+  try {
+    const { issueId } = req.body;
+
+    if (!issueId) {
+      return res.status(400).json({ success: false, message: 'Issue ID is required' });
+    }
+
+    const issue = await Issue.findById(issueId);
+    if (!issue) {
+      return res.status(404).json({ success: false, message: 'Issue not found' });
+    }
+
+    issue.status = 'Completed';
+    issue.volunteerPositions = [];
+    await issue.save();
+
+    return res.status(200).json({
+      success: true,
+      message: 'Issue marked as completed',
+      updatedIssue: issue,
+    });
+  } catch (error) {
+    console.error('Error marking issue as completed:', error);
+    return res.status(500).json({ success: false, message: 'Internal server error' });
+  }
+};
+
+export const submitFeedback = async (req, res) => {
+  try {
+    const { issueId } = req.params;
+    const userId = req.user._id; // assuming auth middleware sets req.user
+    const { resolved, satisfaction, suggestions, issueProblem } = req.body;
+
+    if (!["Yes", "No"].includes(resolved)) {
+      return res.status(400).json({ message: "Resolved must be 'Yes' or 'No'." });
+    }
+
+    const issue = await Issue.findById(issueId);
+
+    if (!issue) {
+      return res.status(404).json({ message: "Issue not found." });
+    }
+
+    if (issue.status !== "Completed") {
+      return res.status(400).json({ message: "Feedback can only be submitted for completed issues." });
+    }
+
+    const alreadySubmitted = issue.feedback.some((fb) =>
+      fb.user.toString() === userId.toString()
+    );
+
+    if (alreadySubmitted) {
+      return res.status(400).json({ message: "You have already submitted feedback for this issue." });
+    }
+
+    const newFeedback = {
+      user: userId,
+      resolved,
+      satisfaction,
+      suggestions,
+      issueProblem,
+    };
+
+    issue.feedback.push(newFeedback);
+    await issue.save();
+
+    res.status(200).json({ message: "Feedback submitted successfully." });
+  } catch (error) {
+    console.error("Error submitting feedback:", error);
+    res.status(500).json({ message: "Internal server error." });
+  }
+};

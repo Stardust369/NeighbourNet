@@ -5,11 +5,19 @@ import axios from 'axios';
 
 export default function Dashboard() {
   const [issues, setIssues] = useState([]);
+  const [filteredIssues, setFilteredIssues] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedLocation, setSelectedLocation] = useState('');
+  const [selectedTags, setSelectedTags] = useState([]);
+
+  const [allTags, setAllTags] = useState([]);
+  const [allLocations, setAllLocations] = useState([]);
+
   const navigate = useNavigate();
-  const { user } = useSelector((state) => state.auth); // assuming you store the user in Redux
+  const { user } = useSelector((state) => state.auth);
 
   useEffect(() => {
     const fetchIssues = async () => {
@@ -19,7 +27,21 @@ export default function Dashboard() {
         });
         if (!res.ok) throw new Error('Failed to fetch issues');
         const data = await res.json();
-        setIssues(data.data || []);
+        const issueList = data.data || [];
+
+        setIssues(issueList);
+        setFilteredIssues(issueList);
+
+        // Extract unique tags and locations
+        const tagsSet = new Set();
+        const locationSet = new Set();
+        issueList.forEach(issue => {
+          issue.tags?.forEach(tag => tagsSet.add(tag));
+          if (issue.issueLocation) locationSet.add(issue.issueLocation);
+        });
+
+        setAllTags([...tagsSet]);
+        setAllLocations([...locationSet]);
       } catch (err) {
         setError(err.message);
       } finally {
@@ -30,6 +52,34 @@ export default function Dashboard() {
     fetchIssues();
   }, []);
 
+  useEffect(() => {
+    let temp = [...issues];
+
+    if (searchTerm) {
+      temp = temp.filter(issue =>
+        issue.title.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
+
+    if (selectedLocation) {
+      temp = temp.filter(issue => issue.issueLocation === selectedLocation);
+    }
+
+    if (selectedTags.length > 0) {
+      temp = temp.filter(issue =>
+        selectedTags.every(tag => issue.tags?.includes(tag))
+      );
+    }
+
+    setFilteredIssues(temp);
+  }, [searchTerm, selectedLocation, selectedTags, issues]);
+
+  const handleTagChange = (tag) => {
+    setSelectedTags(prev =>
+      prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag]
+    );
+  };
+
   const handleUpvote = async (issueId) => {
     try {
       await axios.post(
@@ -37,15 +87,15 @@ export default function Dashboard() {
         {},
         { withCredentials: true }
       );
-      setIssues((prev) =>
-        prev.map((issue) =>
+      setIssues(prev =>
+        prev.map(issue =>
           issue._id === issueId
             ? {
                 ...issue,
                 upvoters: issue.upvoters.includes(user._id)
                   ? issue.upvoters
                   : [...issue.upvoters, user._id],
-                downvoters: issue.downvoters.filter((id) => id !== user._id),
+                downvoters: issue.downvoters.filter(id => id !== user._id),
               }
             : issue
         )
@@ -62,15 +112,15 @@ export default function Dashboard() {
         {},
         { withCredentials: true }
       );
-      setIssues((prev) =>
-        prev.map((issue) =>
+      setIssues(prev =>
+        prev.map(issue =>
           issue._id === issueId
             ? {
                 ...issue,
                 downvoters: issue.downvoters.includes(user._id)
                   ? issue.downvoters
                   : [...issue.downvoters, user._id],
-                upvoters: issue.upvoters.filter((id) => id !== user._id),
+                upvoters: issue.upvoters.filter(id => id !== user._id),
               }
             : issue
         )
@@ -82,17 +132,56 @@ export default function Dashboard() {
 
   return (
     <div>
-      <h2 className="text-2xl font-bold mb-6">All Issues</h2>
+      <h2 className="text-2xl font-bold mb-4">All Issues</h2>
+
+      {/* Filters */}
+      <div className="mb-6 bg-gray-100 p-4 rounded-md shadow-sm">
+        <input
+          type="text"
+          placeholder="Search by name"
+          className="p-2 border rounded w-full mb-4"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+        />
+
+        <div className="flex flex-wrap gap-4">
+          {/* Location Dropdown */}
+          <select
+            className="p-2 border rounded"
+            value={selectedLocation}
+            onChange={(e) => setSelectedLocation(e.target.value)}
+          >
+            <option value="">All Locations</option>
+            {allLocations.map((loc) => (
+              <option key={loc} value={loc}>{loc}</option>
+            ))}
+          </select>
+
+          {/* Tag Checkboxes */}
+          <div className="flex flex-wrap gap-2 items-center">
+            {allTags.map((tag) => (
+              <label key={tag} className="flex items-center space-x-1">
+                <input
+                  type="checkbox"
+                  checked={selectedTags.includes(tag)}
+                  onChange={() => handleTagChange(tag)}
+                />
+                <span className="text-sm">{tag}</span>
+              </label>
+            ))}
+          </div>
+        </div>
+      </div>
 
       {loading && <p>Loading issues...</p>}
       {error && <p className="text-red-600">{error}</p>}
-      {!loading && !error && issues.length === 0 && (
-        <p className="text-gray-600">No issues found.</p>
+      {!loading && !error && filteredIssues.length === 0 && (
+        <p className="text-gray-600">No matching issues found.</p>
       )}
 
-      {!loading && !error && issues.length > 0 && (
+      {!loading && !error && filteredIssues.length > 0 && (
         <div className="space-y-4">
-          {issues.map((issue) => (
+          {filteredIssues.map((issue) => (
             <div
               key={issue._id}
               className="bg-white p-4 rounded-lg shadow-md mb-6 flex flex-col"
