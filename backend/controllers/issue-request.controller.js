@@ -28,3 +28,26 @@ export const requestIssue = async (req, res) => {
   }
 };
 
+export const getIssueRequestsByNGO = async (req, res) => {
+  const ngoId = req.params.id;
+
+  try {
+    const issueRequests = await IssueRequest.find({ requestedBy: ngoId })
+      .populate('issue', '_id'); // Only populate issue _id
+    
+    // Extract only the issue IDs
+    const issueIds = issueRequests.map((request) => request.issue._id);
+
+    res.status(200).json(issueIds); // Return only the issue IDs
+  } catch (error) {
+    console.error('Error fetching issue requests:', error);
+    res.status(500).json({
+      message: 'Server Error while fetching issue requests.',
+    });
+  }
+};
+
+
+
+
+

@@ -70,9 +70,10 @@ export const assignNgoToIssue = async (req, res) => {
 
 export const getIssueByUser = async (req, res) => {
   const userId = req.params.id;
-
+  
   try {
     const issues = await Issue.find({ postedBy: userId });
+    
     res.status(200).json({
       success: true,
       data: issues,

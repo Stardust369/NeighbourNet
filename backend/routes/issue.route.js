@@ -20,6 +20,7 @@ router.get("/users/:id",getIssueByUser);
 router.post("/upvote/:issueId", isAuthenticated, upvoteIssue);
 router.post("/downvote/:issueId", isAuthenticated, downvoteIssue);
 router.get('/:id', getIssueById);
+router.post('/submitVolunteerRequest',submitVolunteerRequest)
 router.get('/claimed/:userId', getClaimedIssuesByUser); // Assuming you want to get issues by userId as well
 router.post('/submitVolunteerRequest', submitVolunteerRequest)
 router.post('/:id/registerVolunteer', isAuthenticated, registerVolunteer)

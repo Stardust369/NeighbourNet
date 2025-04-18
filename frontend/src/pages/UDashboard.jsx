@@ -10,7 +10,7 @@ export default function UDashBoard() {
   const [isSidebarOpen, setSidebarOpen] = useState(false);
   const { user } = useSelector((state) => state.auth);
 
-  const sections = ['Created Issues', 'Volunteering Oppurtunities', 'User Dashboard'];
+  const sections = ['Created Issues', 'Volunteering Oppurtunities', 'User Dashboard','Post Issue'];
 
   const handleLogout = () => {
     dispatch(logout());

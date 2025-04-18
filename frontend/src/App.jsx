@@ -10,8 +10,10 @@ import Register from './pages/Register'
 import ForgotPassword from './pages/ForgotPassword'
 import OTP from './pages/OTP'
 import ResetPassword from './pages/ResetPassword'
+import NGODashboard from './pages/NGODashboard'
 import Dash from './pages/Dash'
 import NGODashh from './pages/NGODashh'
+import Dash from './pages/Dash'
 import UDashBoard from './pages/UDashBoard'
 import UserDashboard from './pages/UserDashboard'
 import ClaimedIssuesPage from './components/ClaimedIssuesPage'
@@ -37,11 +39,6 @@ const App = () => {
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
-        <Route path="/ngo-dashboard" element={<NGODashh />}>
-          <Route path="requests" element={<Dashboard />} />
-          <Route path="claimed-issues" element={<ClaimedIssuesPage />} />
-          {/* Add other routes here */}
-        </Route>
         <Route path="/dashboard" element={<Dash />}>
           <Route path="issues" element={<Dashboard />} />
           <Route path="claimed-issues" element={<ClaimedIssuesPage />} />
@@ -51,6 +48,7 @@ const App = () => {
         <Route path="/otp-verification/:email" element={<OTP />} />
         <Route path="/password/reset/:token" element={<ResetPassword />} />
         <Route path="/create" element={<PostIssue />} />
+        <Route path="/dashboard/post-issue" element={<PostIssue />} />
         <Route path="/issues/:id" element={<IssueDetailsWrapper />} />
         
         <Route path="/dashboard" element={<UDashBoard />}>
@@ -60,10 +58,11 @@ const App = () => {
         </Route>
 
 
-        <Route path="/ngo-dashboard" element={<NGODashh />}>
-          <Route path="requests" element={<Dashboard />} />
+        <Route path="/ngo-dashboard" element={<NGODashboard />}>
+          <Route index element={<NGODashh />} />
+          <Route path="requests"       element={<Dashboard />} />
+          {/* <Route path="query-section"  element={<QuerySection />} /> */}
           <Route path="claimed-issues" element={<ClaimedIssuesPage />} />
-          <Route path="assigned-issues" element={<AssignedIssues />} />
         </Route>
       </Routes>
       <ToastContainer theme='dark' />
