@@ -2,16 +2,17 @@ import React, { useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import axios from 'axios';
 import { toast } from 'react-toastify';
+import DonationForm from '../components/DonationForm';
+import { useNavigate } from 'react-router-dom';
 
 const Donations = () => {
   const [ngos, setNgos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [selectedNgo, setSelectedNgo] = useState(null);
-  const [donationAmount, setDonationAmount] = useState('');
-  const [donationMessage, setDonationMessage] = useState('');
   const [showDonationModal, setShowDonationModal] = useState(false);
   const { user } = useSelector((state) => state.auth);
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchNgos();
@@ -37,39 +38,11 @@ const Donations = () => {
     setShowDonationModal(true);
   };
 
-  const handleDonation = async () => {
-    if (!selectedNgo) return;
-    
-    if (!donationAmount || donationAmount <= 0) {
-      toast.error('Please enter a valid donation amount');
-      return;
-    }
-
-    try {
-      const response = await axios.post(
-        'http://localhost:3000/api/v1/donations',
-        {
-          ngoId: selectedNgo._id,
-          amount: parseFloat(donationAmount),
-          message: donationMessage,
-        },
-        {
-          withCredentials: true
-        }
-      );
-      
-      toast.success(`Successfully donated ₹${donationAmount} to ${selectedNgo.name}`);
-      setShowDonationModal(false);
-      setDonationAmount('');
-      setDonationMessage('');
-      setSelectedNgo(null);
-      
-      // Refresh NGO list to update donation amounts
-      fetchNgos();
-    } catch (err) {
-      toast.error('Failed to process donation');
-      console.error(err);
-    }
+  const handleDonationSuccess = (donationDetails) => {
+    setShowDonationModal(false);
+    setSelectedNgo(null);
+    fetchNgos(); // Refresh NGO list to update donation amounts
+    navigate('/payment-success', { state: { donationDetails } });
   };
 
   return (
@@ -113,50 +86,23 @@ const Donations = () => {
       {showDonationModal && selectedNgo && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
           <div className="bg-white rounded-lg p-6 w-full max-w-md">
-            <h2 className="text-2xl font-bold mb-4">Donate to {selectedNgo.name}</h2>
+            <button
+              onClick={() => {
+                setShowDonationModal(false);
+                setSelectedNgo(null);
+              }}
+              className="absolute top-4 right-4 text-gray-500 hover:text-gray-700"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
             
-            <div className="mb-4">
-              <label className="block text-gray-700 mb-2">Donation Amount (₹)</label>
-              <input
-                type="number"
-                value={donationAmount}
-                onChange={(e) => setDonationAmount(e.target.value)}
-                className="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Enter amount"
-                min="1"
-              />
-            </div>
-            
-            <div className="mb-4">
-              <label className="block text-gray-700 mb-2">Message (Optional)</label>
-              <textarea
-                value={donationMessage}
-                onChange={(e) => setDonationMessage(e.target.value)}
-                className="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Add a message with your donation"
-                rows="3"
-              />
-            </div>
-            
-            <div className="flex justify-end space-x-3">
-              <button
-                onClick={() => {
-                  setShowDonationModal(false);
-                  setDonationAmount('');
-                  setDonationMessage('');
-                  setSelectedNgo(null);
-                }}
-                className="px-4 py-2 bg-gray-300 text-gray-800 rounded hover:bg-gray-400"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleDonation}
-                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-              >
-                Donate
-              </button>
-            </div>
+            <DonationForm 
+              ngoId={selectedNgo._id} 
+              ngoName={selectedNgo.name}
+              onSuccess={handleDonationSuccess}
+            />
           </div>
         </div>
       )}

@@ -115,17 +115,15 @@ export const getNGOStatistics = async (req, res) => {
       { $match: { ngoId: ngoId } },
       { $group: { _id: null, total: { $sum: '$amount' } } },
     ]);
-
     const totalDonations = totalDonationsResult.length > 0 ? totalDonationsResult[0].total : 0;
 
     // Get total unique donors
     const totalDonorsResult = await Donation.aggregate([
       { $match: { ngoId: ngoId } },
       { $group: { _id: '$userId' } },
-      { $count: 'total' }
+      { $count: 'totalDonors' }
     ]);
-
-    const totalDonors = totalDonorsResult.length > 0 ? totalDonorsResult[0].total : 0;
+    const totalDonors = totalDonorsResult.length > 0 ? totalDonorsResult[0].totalDonors : 0;
 
     // Get recent donations
     const recentDonations = await Donation.find({ ngoId })

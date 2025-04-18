@@ -1,7 +1,7 @@
 import express from "express";
 import {
     requestIssue,
-    getIssueRequestsByNGO
+    getIssueRequestsByNGO,
 } from "../controllers/issue-request.controller.js";
 import { isAuthenticated } from "../middlewares/auth.middleware.js";
 

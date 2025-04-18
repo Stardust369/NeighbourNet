@@ -12,6 +12,8 @@ import {
   disclaimIssue,
   markIssueAsCompleted,
   submitFeedback,
+  getIssueThroughId,
+  getIssuesVolunteered,
   assignTask,
   getMyTasks,
   sendTaskUpdate,
@@ -26,6 +28,8 @@ const router = express.Router();
 router.post("/create",isAuthenticated, createIssue);
 router.get("/getAll", getAllIssues);
 router.get("/users/:id",getIssueByUser);
+router.get("/getIssue/:id",getIssueThroughId);
+router.get("/requested/:id",getIssuesVolunteered);
 router.post("/upvote/:issueId", isAuthenticated, upvoteIssue);
 router.post("/downvote/:issueId", isAuthenticated, downvoteIssue);
 router.get('/:id', getIssueById);

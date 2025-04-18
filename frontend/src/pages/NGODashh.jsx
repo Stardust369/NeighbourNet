@@ -28,7 +28,7 @@ const NGODashh = () => {
   const [statistics, setStatistics] = useState({
     totalIssuesResolved: 0,
     activeVolunteers: 0,
-    totalDonations: 5000, // Hardcoded as requested
+    totalDonations: 5000, 
     completionRate: 0
   });
   const [selectedLocation, setSelectedLocation] = useState('all');
@@ -73,11 +73,10 @@ const NGODashh = () => {
           const issueId = issueIds[i];
           
           try {
-            const issueResponse = await fetch(`http://localhost:3000/api/v1/issues/${issueId}`);
+            const issueResponse = await fetch(`http://localhost:3000/api/v1/issues/getIssue/${issueId}`);
             const issueResult = await issueResponse.json();
-            console.log("is",issueResult);
             if (issueResult.success) {
-              claimedIssues.push(issueResult.issue); // Add the issue to the claimedIssues array
+              claimedIssues.push(issueResult.data); // Add the issue to the claimedIssues array
             } else {
               console.error(`Failed to fetch issue with ID: ${issueId}`);
             }
@@ -86,7 +85,6 @@ const NGODashh = () => {
           }
         }
 
-        console.log(claimedIssues);
 
 
         // Calculate statistics
@@ -97,42 +95,50 @@ const NGODashh = () => {
           const deadline = new Date(issue.deadline);
           return completionDate <= deadline;
         });
-
         // Get active volunteers (unique volunteers from all claimed issues)
+        const flattenedIssues = claimedIssues.flat();
+
+        // Initialize set
         const activeVolunteersSet = new Set();
-        claimedIssues.forEach(issue => {
+
+        // Extract volunteer IDs
+        flattenedIssues.forEach(issue => {
           issue.volunteerPositions?.forEach(position => {
             position.registeredVolunteers?.forEach(volunteerId => {
               activeVolunteersSet.add(volunteerId);
             });
           });
         });
-
         setStatistics({
           totalIssuesResolved: completedIssues.length,
           activeVolunteers: activeVolunteersSet.size,
-          totalDonations: 5000, // Hardcoded as requested
+          totalDonations: 5000, 
           completionRate: claimedIssues.length > 0 
             ? Math.round((onTimeCompletedIssues.length / claimedIssues.length) * 100) 
             : 0
         });
-
+        console.log(claimedIssues);
         // Set assigned issues
-        setAssignedIssues(claimedIssues.map(issue => ({
-          id: issue._id,
-          title: issue.title,
-          location: issue.issueLocation,
-          status: issue.status.toLowerCase(),
-          startDate: new Date(issue.createdAt).toISOString().split('T')[0],
-          deadline: issue.deadline ? new Date(issue.deadline).toISOString().split('T')[0] : null,
-          progress: issue.status === 'Completed' ? 100 : 
-                   issue.status === 'Assigned' ? 50 : 0,
-          media: issue.images?.map(img => img.url) || [],
-          description: issue.content
-        })));
+        setAssignedIssues(
+          flattenedIssues.map(issue => ({
+            id: issue._id,
+            title: issue.title,
+            location: issue.issueLocation,
+            status: (issue.status || 'unknown').toLowerCase(),
+            startDate: new Date(issue.createdAt).toISOString().split('T')[0],
+            deadline: issue.deadline
+              ? new Date(issue.deadline).toISOString().split('T')[0]
+              : null,
+            progress:
+              issue.status === 'Completed' ? 100 :
+              issue.status === 'Assigned' ? 50 : 0,
+            media: issue.images?.map(img => img.url) || [],
+            description: issue.content
+          }))
+        );
 
         // Set active jobs (from volunteer positions)
-        const jobs = claimedIssues
+        const jobs = flattenedIssues
           .filter(issue => issue.status !== 'Completed')
           .flatMap(issue => 
             issue.volunteerPositions?.map(position => ({
@@ -154,7 +160,7 @@ const NGODashh = () => {
         setActiveJobs(jobs);
 
         // Set task proofs (from issue comments)
-        const proofs = claimedIssues
+        const proofs = flattenedIssues
           .filter(issue => issue.status === 'Completed')
           .flatMap(issue => 
             issue.comments?.map(comment => ({
@@ -182,20 +188,22 @@ const NGODashh = () => {
         const volunteerDetails = await Promise.all(
           Array.from(activeVolunteersSet).map(async (volunteerId) => {
             try {
-              const response = await axios.get(`/api/users/${volunteerId}`);
+              const response = await axios.get(`http://localhost:3000/api/v1/auth/${volunteerId}`);
               const volunteer = response.data.data;
+             
+              // Calculate the number of tasks completed by the volunteer
+              const tasksCompleted = completedIssues.filter(issue => 
+                issue.volunteerPositions?.some(position => 
+                  position.registeredVolunteers?.includes(volunteer._id)
+                )
+              ).length;
+              
               return {
                 id: volunteer._id,
                 name: volunteer.name,
-                role: 'Volunteer',
-                tasksCompleted: completedIssues.filter(issue => 
-                  issue.volunteerPositions?.some(position => 
-                    position.registeredVolunteers?.includes(volunteerId)
-                  )
-                ).length,
-                rating: 4.5, // This could be calculated based on actual performance
-                availability: 'Flexible',
-                skills: issue.tags || []
+                location: volunteer.location || 'Not Specified',
+                totalDonations: volunteer.totalDonations || 0,
+                tasksCompleted, // Number of tasks completed by the volunteer
               };
             } catch (error) {
               console.error(`Error fetching volunteer ${volunteerId}:`, error);
@@ -203,7 +211,10 @@ const NGODashh = () => {
             }
           })
         );
+
+        // Set the volunteers state with the filtered details
         setVolunteers(volunteerDetails.filter(v => v !== null));
+        
 
       } catch (error) {
         console.error('Error fetching NGO data:', error);
@@ -232,25 +243,9 @@ const NGODashh = () => {
     }));
   };
 
-  const filteredVolunteers = volunteers
-    .filter((v) =>
-      v.name.toLowerCase().includes(volunteerSearch.toLowerCase()) ||
-      v.role.toLowerCase().includes(volunteerSearch.toLowerCase()) ||
-      v.skills.some((s) =>
-        s.toLowerCase().includes(volunteerSearch.toLowerCase())
-      )
-    )
-    .sort((a, b) => {
-      if (sortConfig.key === 'rating') {
-        return sortConfig.direction === 'asc'
-          ? a.rating - b.rating
-          : b.rating - a.rating;
-      }
-      return sortConfig.direction === 'asc'
-        ? String(a[sortConfig.key]).localeCompare(b[sortConfig.key])
-        : String(b[sortConfig.key]).localeCompare(a[sortConfig.key]);
-    });
-
+  const filteredVolunteers = volunteers.filter(vol =>
+    vol.name.toLowerCase().includes(volunteerSearch.toLowerCase())
+  );
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -464,86 +459,59 @@ const NGODashh = () => {
 
       {/* Volunteer Management */}
       <div className="bg-white rounded-lg shadow p-6 mb-8">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-semibold flex items-center">
-            <FaUsers className="text-purple-500 mr-2" /> Volunteer Management
-          </h2>
-          <div className="relative">
-            <input
-              type="text"
-              placeholder="Search volunteers..."
-              value={volunteerSearch}
-              onChange={(e) => setVolunteerSearch(e.target.value)}
-              className="pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-            <FaSearch className="absolute left-3 top-3 text-gray-400" />
-          </div>
-        </div>
-        <div className="overflow-x-auto">
-          <table className="min-w-full">
-            <thead>
-              <tr className="bg-gray-50">
-                {[
-                  { key: 'name', label: 'Name' },
-                  { key: 'role', label: 'Role' },
-                  { key: 'tasksCompleted', label: 'Tasks Completed' },
-                  { key: 'rating', label: 'Rating' }
-                ].map((col) => (
-                  <th
-                    key={col.key}
-                    onClick={() => handleSort(col.key)}
-                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase cursor-pointer hover:bg-gray-100"
-                  >
-                    <div className="flex items-center">
-                      {col.label}
-                      <FaSort className="ml-1" />
-                    </div>
-                  </th>
-                ))}
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                  Availability
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                  Skills
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200">
-              {filteredVolunteers.map((vol) => (
-                <tr key={vol.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap">{vol.name}</td>
-                  <td className="px-6 py-4 whitespace-nowrap">{vol.role}</td>
-                  <td className="px-6 py-4 whitespace-nowrap">{vol.tasksCompleted}</td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center">
-                      {[...Array(5)].map((_, idx) => (
-                        <FaStar
-                          key={idx}
-                          className={`w-4 h-4 ${
-                            idx < Math.floor(vol.rating) ? 'text-yellow-400' : 'text-gray-300'
-                          }`}
-                        />
-                      ))}
-                      <span className="ml-1 text-sm">{vol.rating}</span>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">{vol.availability}</td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex flex-wrap gap-1">
-                      {vol.skills.map((s, i) => (
-                        <span
-                          key={i}
-                          className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs"
-                        >
-                          {s}
-                        </span>
-                      ))}
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+  <div className="flex items-center justify-between mb-4">
+    <h2 className="text-xl font-semibold flex items-center">
+      <FaUsers className="text-purple-500 mr-2" /> Volunteer Management
+    </h2>
+    <div className="relative">
+      <input
+        type="text"
+        placeholder="Search volunteers..."
+        value={volunteerSearch}
+        onChange={(e) => setVolunteerSearch(e.target.value)}
+        className="pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+      />
+      <FaSearch className="absolute left-3 top-3 text-gray-400" />
+    </div>
+  </div>
+
+  <div className="overflow-x-auto">
+    <table className="min-w-full">
+      <thead>
+        <tr className="bg-gray-50">
+          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+            Name
+          </th>
+          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+            Location
+          </th>
+          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+            Total Donations
+          </th>
+          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+            Tasks Completed
+          </th>
+        </tr>
+      </thead>
+      <tbody className="divide-y divide-gray-200">
+        {filteredVolunteers.length > 0 ? (
+          filteredVolunteers.map((vol) => (
+            <tr key={vol.id} className="hover:bg-gray-50">
+              <td className="px-6 py-4 whitespace-nowrap">{vol.name}</td>
+              <td className="px-6 py-4 whitespace-nowrap">{vol.location}</td>
+              <td className="px-6 py-4 whitespace-nowrap">₹{vol.totalDonations}</td>
+              <td className="px-6 py-4 whitespace-nowrap">{vol.tasksCompleted}</td>
+            </tr>
+          ))
+        ) : (
+          <tr>
+            <td colSpan={4} className="px-6 py-4 text-center text-gray-500">
+              No volunteers found.
+            </td>
+          </tr>
+        )}
+      </tbody>
+    </table>
         </div>
     </div>
     </>
