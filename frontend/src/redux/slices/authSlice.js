@@ -49,6 +49,8 @@ const authSlice = createSlice({
             state.message = action.payload.message;
             state.isAuthenticated = true;
             state.user = action.payload.user;
+            // Store user data in localStorage
+            localStorage.setItem('user', JSON.stringify(action.payload.user));
         },
         loginFailed(state, action) {
             state.loading = false;
@@ -63,7 +65,8 @@ const authSlice = createSlice({
             state.loading = false;
             state.isAuthenticated = false;
             state.user = null;
-            state.message = state.payload;
+            state.message = null;
+            state.error = null;
         },
         logoutFailed(state, action) {
             state.loading = false;
@@ -161,48 +164,72 @@ export const otpVerification = (email, otp) => async (dispatch) => {
 
 export const login = (data) => async (dispatch) => {
     dispatch(authSlice.actions.loginRequest());
-    await axios
-        .post("http://localhost:3000/api/v1/auth/login", data, {
-            withCredentials: true,
-            headers: {
-                "Content-Type": "application/json",
-            },
-        })
-        .then((res) => {
-            dispatch(authSlice.actions.loginSuccess(res.data));
-        })
-        .catch((error) => {
-            dispatch(authSlice.actions.loginFailed(error.response.data.message));
-        });
+    try {
+        const response = await axios.post(
+            "http://localhost:3000/api/v1/auth/login", 
+            data, 
+            {
+                withCredentials: true,
+                headers: {
+                    "Content-Type": "application/json",
+                },
+            }
+        );
+        dispatch(authSlice.actions.loginSuccess(response.data));
+    } catch (error) {
+        console.error("Login error:", error.response?.data);
+        // Check if the error message indicates user not found
+        if (error.response?.data?.msg === "User not found") {
+            window.location.href = "/register";
+            return;
+        }
+        dispatch(authSlice.actions.loginFailed(error.response?.data?.msg || "Login failed"));
+    }
 };
 
 export const logout = () => async (dispatch) => {
-    dispatch(authSlice.actions.logoutRequest());
-    await axios
-        .get("http://localhost:3000/api/v1/auth/logout", {
+    try {
+        // First clear the local state and storage
+        localStorage.removeItem('user');
+        dispatch(authSlice.actions.logoutSuccess());
+        
+        // Then make the API call to clear the cookie
+        await axios.get("http://localhost:3000/api/v1/auth/logout", {
             withCredentials: true,
-        })
-        .then((res) => {
-            dispatch(authSlice.actions.logoutSuccess(res.data.message));
-            dispatch(authSlice.actions.resetAuthSlice())
-        })
-        .catch((error) => {
-            dispatch(authSlice.actions.logoutFailed(error.response.data.message));
         });
+        
+        return true;
+    } catch (error) {
+        console.error('Logout error:', error);
+        // Even if the API call fails, we've already cleared the local state
+        // So we still return true to allow navigation
+        return true;
+    }
 };
 
 export const getUser = () => async (dispatch) => {
+    // Check if we have a user in localStorage first
+    const storedUser = localStorage.getItem('user');
+    if (!storedUser) {
+        dispatch(authSlice.actions.getUserFailed());
+        return;
+    }
+
     dispatch(authSlice.actions.getUserRequest());
-    await axios
-        .get("http://localhost:3000/api/v1/auth/profile", {
-            withCredentials: true,
-        })
-        .then((res) => {
-            dispatch(authSlice.actions.getUserSuccess(res.data));
-        })
-        .catch((error) => {
-            dispatch(authSlice.actions.getUserFailed(error.response.data.message));
-        });
+    try {
+        const response = await axios.get(
+            "http://localhost:3000/api/v1/auth/profile",
+            {
+                withCredentials: true,
+            }
+        );
+        dispatch(authSlice.actions.getUserSuccess(response.data));
+    } catch (error) {
+        console.error("Profile fetch error:", error);
+        dispatch(authSlice.actions.getUserFailed());
+        // Clear stored user data on auth error
+        localStorage.removeItem('user');
+    }
 };
 
 export const forgotPassword = (email) => async (dispatch) => {

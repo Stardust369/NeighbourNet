@@ -1,10 +1,15 @@
 import cookieParser from "cookie-parser";
 import { app } from "./app.js";
-import {config} from "dotenv";
+import { config } from "dotenv";
 config();
-app.listen(process.env.PORT || 3000,()=>{
-    console.log(`Server is running on port ${process.env.PORT}`);
-})
+
+// Import routes
+import donationRoutes from './routes/donation.routes.js';
+import userRoutes from './routes/user.route.js';
+
+// Use routes
+app.use('/api/v1/donations', donationRoutes);
+app.use('/api/v1/user', userRoutes);
 
 //middleware for error handling
 app.use((err, req, res, next) => {
@@ -15,4 +20,8 @@ app.use((err, req, res, next) => {
         statusCode,
         message,
     });
+});
+
+app.listen(process.env.PORT || 3000,()=>{
+    console.log(`Server is running on port ${process.env.PORT}`);
 });

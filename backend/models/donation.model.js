@@ -1,48 +1,44 @@
-// import mongoose from "mongoose";
+import mongoose from 'mongoose';
 
-// const donationSchema = new mongoose.Schema(
-//   {
-//     donorName: {
-//       type: String,
-//       required: true,
-//       trim: true
-//     },
-//     email: {
-//       type: String,
-//       required: true,
-//       trim: true
-//     },
-//     amount: {
-//       type: Number,
-//       required: true
-//     },
-//     currency: {
-//       type: String,
-//       default: "INR"
-//     },
-//     message: {
-//       type: String,
-//       default: "Supporting a good cause"
-//     },
-//     orderId: {
-//       type: String,
-//       required: true
-//     },
-//     paymentId: {
-//       type: String
-//     },
-//     status: {
-//       type: String,
-//       enum: ["created", "paid", "failed"],
-//       default: "created"
-//     },
-//     issueId: {
-//       type: mongoose.Schema.Types.ObjectId,
-//       ref: "Issue",
-//       default: null
-//     }
-//   },
-//   { timestamps: true }
-// );
+const donationSchema = new mongoose.Schema(
+  {
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      required: true,
+    },
+    ngoId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      required: true,
+    },
+    amount: {
+      type: Number,
+      required: true,
+      min: 1,
+    },
+    status: {
+      type: String,
+      enum: ['pending', 'completed', 'failed'],
+      default: 'completed',
+    },
+    transactionId: {
+      type: String,
+      required: true,
+    },
+    message: {
+      type: String,
+      default: '',
+    },
+  },
+  {
+    timestamps: true,
+  }
+);
 
-// export const Donation = mongoose.model("Donation", donationSchema);
+// Create a compound index for faster queries
+donationSchema.index({ userId: 1, ngoId: 1 });
+
+const Donation = mongoose.model('Donation', donationSchema);
+
+export default Donation;

@@ -330,13 +330,13 @@ const NGODashh = () => {
               {assignedIssues.length} Issues Claimed
             </span>
           </div>
-          <button
+      <button
             onClick={() => navigate('/ngo-dashboard/claimed-issues')}
             className="group flex items-center space-x-2 bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg transition transform hover:scale-105"
-          >
+      >
             <span className="text-lg font-semibold">View All Claimed Issues</span>
             <FaArrowRight className="group-hover:translate-x-1 transition" />
-          </button>
+      </button>
         </div>
       </div>
 
@@ -415,18 +415,18 @@ const NGODashh = () => {
                   </span>
                 </div>
                 <div className="flex space-x-2">
-                  <button
+                <button
                     onClick={() => handleProofReview(proof.id, 'approved')}
                     className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm"
-                  >
+                >
                     Approve
-                  </button>
-                  <button
+                </button>
+        <button
                     onClick={() => handleProofReview(proof.id, 'rejected')}
                     className="px-3 py-1 bg-red-100 text-red-800 rounded-full text-sm"
-                  >
+        >
                     Reject
-                  </button>
+        </button>
                 </div>
               </div>
             </div>
@@ -545,7 +545,7 @@ const NGODashh = () => {
             </tbody>
           </table>
         </div>
-      </div>
+    </div>
     </>
   );
 };

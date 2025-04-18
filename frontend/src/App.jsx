@@ -24,6 +24,8 @@ import { getUser } from './redux/slices/authSlice'
 import PostIssue from './pages/PostIssue'
 import Dashboard from './components/Dashboard'
 import AssignedIssues from './pages/AssignedIssues'
+import Donations from './pages/Donations'
+import NGODonations from './components/NGODonations'
 
 const App = () => {
   const { user, isAuthenticated } = useSelector((state) => state.auth)
@@ -39,11 +41,6 @@ const App = () => {
         <Route path="/" element={<Home />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
-        <Route path="/dashboard" element={<Dash />}>
-          <Route path="issues" element={<Dashboard />} />
-          <Route path="claimed-issues" element={<ClaimedIssuesPage />} />
-          {/* Add other routes here */}
-        </Route>
         <Route path="/password/forgot" element={<ForgotPassword />} />
         <Route path="/otp-verification/:email" element={<OTP />} />
         <Route path="/password/reset/:token" element={<ResetPassword />} />
@@ -55,20 +52,20 @@ const App = () => {
           <Route path="created-issues" element={<CreatedIssues />} />
           <Route path="volunteering-oppurtunities" element={<Dashboard />} />
           <Route path="user-dashboard" element={<UserDashboard />} />
+          <Route path="donations" element={<Donations />} />
+          <Route path="postissue" element={<PostIssue />} />
         </Route>
-
 
         <Route path="/ngo-dashboard" element={<NGODashboard />}>
           <Route index element={<NGODashh />} />
-          <Route path="requests"       element={<Dashboard />} />
-          {/* <Route path="query-section"  element={<QuerySection />} /> */}
+          <Route path="requests" element={<Dashboard />} />
           <Route path="claimed-issues" element={<ClaimedIssuesPage />} />
+          <Route path="donations" element={<NGODonations />} />
         </Route>
       </Routes>
-      <ToastContainer theme='dark' />
+      <ToastContainer />
     </Router>
-    
   );
-};
+}
 
 export default App;

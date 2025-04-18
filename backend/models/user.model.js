@@ -50,7 +50,11 @@ const userSchema= new mongoose.Schema({
       verificationCode: Number,
       verificationCodeExpire:Date,
       resetPasswordToken:String,
-      resetPasswordExpires:Date
+      resetPasswordExpires:Date,
+      totalDonations: {
+        type: Number,
+        default: 0,
+      },
     },{
     timestamps: true
 });

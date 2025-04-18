@@ -223,3 +223,53 @@ export const resetPassword=async(req,res)=>{
 
 
 }
+
+// Get all NGOs for donation page
+export const getAllNGOs = async (req, res) => {
+  try {
+    // Get all NGOs with role NGO
+    const ngos = await User.find({ role: 'NGO' })
+      .select('name email location description totalDonations issuesResolved');
+
+    return res.status(200).json({
+      success: true,
+      data: ngos
+    });
+  } catch (error) {
+    console.error('Error fetching NGOs:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to fetch NGOs'
+    });
+  }
+};
+
+// Temporary function to create a test NGO
+export const createTestNGO = async (req, res) => {
+  try {
+    const testNGO = await User.create({
+      name: "Test NGO",
+      email: "testngo@example.com",
+      password: await bcrypt.hash("password123", 10),
+      role: "NGO",
+      location: "Test Location",
+      description: "This is a test NGO for development purposes",
+      isActive: true,
+      accountVerified: true,
+      totalDonations: 0,
+      issuesResolved: 0
+    });
+
+    return res.status(201).json({
+      success: true,
+      message: "Test NGO created successfully",
+      data: testNGO
+    });
+  } catch (error) {
+    console.error('Error creating test NGO:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to create test NGO'
+    });
+  }
+};
