@@ -3,8 +3,11 @@ import { generateForgotPasswordEmailTemplate } from "../utils/emailTemplates.js"
 import { sendEmail } from "../utils/sendEmail.js";
 import { sendToken } from "../utils/sendToken.js";
 import { sendVerificationCode } from "../utils/sendVerificationCode.js";
+import mongoose from "mongoose";
 import bcrypt from "bcryptjs"
 import crypto from "crypto"
+
+const { ObjectId } = mongoose.Types;
 import jwt from "jsonwebtoken"
 
 export const register = async (req, res) => {
@@ -316,7 +319,7 @@ export const createTestNGO = async (req, res) => {
 export const getUserDetails = async (req, res) => {
     try {
       const userId = req.params.id;
-    
+      console.log(userId);
       if (!userId) {
         return res.status(400).json({
           success: false,

@@ -31,6 +31,12 @@ import PaymentSuccess from './pages/PaymentSuccess'
 import PaymentCancel from './pages/PaymentCancel'
 import AdminDashboard from './pages/AdminDashboard'
 
+import Events from './pages/Events'
+import CreateEvent from './pages/CreateEvent'
+import EventDetailsWrapper from './components/EventDetailsWrapper'
+import CreatedEvents from './pages/CreatedEvents'
+import RegisteredEvents from './pages/RegisteredEvents'
+
 const App = () => {
   const { user, isAuthenticated } = useSelector((state) => state.auth)
   const dispatch = useDispatch();
@@ -54,12 +60,18 @@ const App = () => {
         <Route path="/payment-success" element={<PaymentSuccess />} />
         <Route path="/payment-cancel" element={<PaymentCancel />} />
         
+        {/* Event Routes */}
+        <Route path="/events" element={<Events />} />
+        <Route path="/events/:id" element={<EventDetailsWrapper />} />
+        
         <Route path="/dashboard" element={<UDashBoard />}>
           <Route path="created-issues" element={<CreatedIssues />} />
           <Route path="volunteering-oppurtunities" element={<Dashboard />} />
           <Route path="user-dashboard" element={<UserDashboard />} />
           <Route path="donations" element={<Donations />} />
           <Route path="postissue" element={<PostIssue />} />
+          {/* User Event Routes */}
+          <Route path="my-events" element={<RegisteredEvents />} />
         </Route>
 
         <Route path="/ngo-dashboard" element={<NGODashboard />}>
@@ -67,6 +79,10 @@ const App = () => {
           <Route path="requests" element={<Dashboard />} />
           <Route path="claimed-issues" element={<ClaimedIssuesPage />} />
           <Route path="donations" element={<NGODonations />} />
+          {/* NGO Event Routes */}
+          <Route path="create-event" element={<CreateEvent />} />
+          <Route path="created-events" element={<CreatedEvents />} />
+          <Route path="events/:id/edit" element={<CreateEvent />} />
         </Route>
 
         <Route path="/admin/dashboard" element={
