@@ -25,6 +25,8 @@ import Dashboard from './components/Dashboard'
 import AssignedIssues from './pages/AssignedIssues'
 import Donations from './pages/Donations'
 import NGODonations from './components/NGODonations'
+import PaymentSuccess from './pages/PaymentSuccess'
+import PaymentCancel from './pages/PaymentCancel'
 
 const App = () => {
   const { user, isAuthenticated } = useSelector((state) => state.auth)
@@ -46,6 +48,8 @@ const App = () => {
         <Route path="/create" element={<PostIssue />} />
         <Route path="/dashboard/post-issue" element={<PostIssue />} />
         <Route path="/issues/:id" element={<IssueDetailsWrapper />} />
+        <Route path="/payment-success" element={<PaymentSuccess />} />
+        <Route path="/payment-cancel" element={<PaymentCancel />} />
         
         <Route path="/dashboard" element={<UDashBoard />}>
           <Route path="created-issues" element={<CreatedIssues />} />
