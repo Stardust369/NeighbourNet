@@ -10,13 +10,10 @@ import Register from './pages/Register'
 import ForgotPassword from './pages/ForgotPassword';
 import IssueDetailsWrapper from './components/IssueDetailsWrapper';
 import OTP from './pages/OTP'
-import Dashboard from './pages/Dashboard'
+import Dash from './pages/Dash'
 import NGODashh from './pages/NGODashh'
-import NGODash from './pages/NGODashboard'
 import UserDashboard from './pages/UserDashboard'
-import DashBoard from './pages/DashBoard'
 import CreatedIssues from './pages/CreatedIssues'
-import NGODash from './pages/NGODash'
 import ResetPassword from './pages/ResetPassword'
 import { useDispatch, useSelector } from 'react-redux'
 import { getUser } from './redux/slices/authSlice'
@@ -39,8 +36,13 @@ const App = () => {
         <Route path="/issues/:id" element={<IssueDetailsWrapper />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
-        <Route path="/ngo-dashboard" element={<NGODash />}>
+        <Route path="/ngo-dashboard" element={<NGODashh />}>
           <Route path="requests" element={<Dashboard />} />
+          <Route path="claimed-issues" element={<ClaimedIssuesPage />} />
+          {/* Add other routes here */}
+        </Route>
+        <Route path="/dashboard" element={<Dash />}>
+          <Route path="issues" element={<Dashboard />} />
           <Route path="claimed-issues" element={<ClaimedIssuesPage />} />
           {/* Add other routes here */}
         </Route>
@@ -51,22 +53,7 @@ const App = () => {
       </Routes>
       <ToastContainer theme='dark' />
     </Router>
-      <Router>
-          <Routes>
-              <Route path="/" element={<Home />} />
-              <Route path="/ngo-dashboard" element={<NGODash />} />
-              <Route path="/dashboard" element={<DashBoard />} />
-              <Route path="/dashboard/created-issues" element={<CreatedIssues />} />
-              <Route path="/issues/:id" element={<IssueDetailsWrapper />} />
-              <Route path="/login" element={<Login />} />
-              <Route path="/register" element={<Register />} />
-              <Route path="/password/forgot" element={<ForgotPassword />} />
-              <Route path="/otp-verification/:email" element={<OTP />} />
-              <Route path="/password/reset/:token" element={<ResetPassword />} />
-              <Route path="/create" element={<PostIssue />} />
-          </Routes>
-          <ToastContainer theme='dark'/>
-      </Router>
+    
   );
 };
 

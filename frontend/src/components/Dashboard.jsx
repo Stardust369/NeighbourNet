@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useSelector } from 'react-redux';
+import axios from 'axios';
 
 export default function Dashboard() {
   const [issues, setIssues] = useState([]);
@@ -7,6 +9,7 @@ export default function Dashboard() {
   const [error, setError] = useState(null);
 
   const navigate = useNavigate();
+  const { user } = useSelector((state) => state.auth); // assuming you store the user in Redux
 
   useEffect(() => {
     const fetchIssues = async () => {
@@ -27,13 +30,66 @@ export default function Dashboard() {
     fetchIssues();
   }, []);
 
+  const handleUpvote = async (issueId) => {
+    try {
+      await axios.post(
+        `http://localhost:3000/api/v1/issues/upvote/${issueId}`,
+        {},
+        { withCredentials: true }
+      );
+      setIssues((prev) =>
+        prev.map((issue) =>
+          issue._id === issueId
+            ? {
+                ...issue,
+                upvoters: issue.upvoters.includes(user._id)
+                  ? issue.upvoters
+                  : [...issue.upvoters, user._id],
+                downvoters: issue.downvoters.filter((id) => id !== user._id),
+              }
+            : issue
+        )
+      );
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleDownvote = async (issueId) => {
+    try {
+      await axios.post(
+        `http://localhost:3000/api/v1/issues/downvote/${issueId}`,
+        {},
+        { withCredentials: true }
+      );
+      setIssues((prev) =>
+        prev.map((issue) =>
+          issue._id === issueId
+            ? {
+                ...issue,
+                downvoters: issue.downvoters.includes(user._id)
+                  ? issue.downvoters
+                  : [...issue.downvoters, user._id],
+                upvoters: issue.upvoters.filter((id) => id !== user._id),
+              }
+            : issue
+        )
+      );
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   return (
     <div>
       <h2 className="text-2xl font-bold mb-6">All Issues</h2>
 
       {loading && <p>Loading issues...</p>}
       {error && <p className="text-red-600">{error}</p>}
-      {!loading && !error && issues.length === 0 && <p className="text-gray-600">No issues found.</p>}
+      {!loading && !error && issues.length === 0 && (
+        <p className="text-gray-600">No issues found.</p>
+      )}
+
       {!loading && !error && issues.length > 0 && (
         <div className="space-y-4">
           {issues.map((issue) => (
@@ -67,9 +123,32 @@ export default function Dashboard() {
                 }}
               />
 
-              <p className="text-sm text-gray-500 mb-4">
+              <p className="text-sm text-gray-500 mb-2">
                 <strong>Location:</strong> {issue.issueLocation}
               </p>
+
+              {user?.role === 'User' && (
+                <div className="flex items-center gap-4 mb-2">
+                  <button
+                    onClick={() => handleUpvote(issue._id)}
+                    className={`px-3 py-1 rounded text-white font-semibold ${issue.upvoters.includes(user._id)
+                      ? 'bg-green-600'
+                      : 'bg-gray-500'
+                      }`}
+                  >
+                    👍 {issue.upvoters.length}
+                  </button>
+                  <button
+                    onClick={() => handleDownvote(issue._id)}
+                    className={`px-3 py-1 rounded text-white font-semibold ${issue.downvoters.includes(user._id)
+                      ? 'bg-red-600'
+                      : 'bg-gray-500'
+                      }`}
+                  >
+                    👎 {issue.downvoters.length}
+                  </button>
+                </div>
+              )}
 
               <button
                 onClick={() => navigate(`/issues/${issue._id}`)}

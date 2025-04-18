@@ -13,6 +13,8 @@ export default function IssueDetailsPage({ issue: initialIssue }) {
   const [errors, setErrors] = useState({});
   const { user } = useSelector((state) => state.auth);
   const [currentIndex, setCurrentIndex] = useState(0);
+  console.log(issue);
+  
 
   const handleSubmit = async () => {
     let currentErrors = {};
@@ -109,36 +111,39 @@ export default function IssueDetailsPage({ issue: initialIssue }) {
           </div>
         </div>
 
-        <div className="mb-6">
-          <h2 className="text-xl font-semibold mb-2">Images</h2>
-          <div className="relative">
-            <img
-              src={issue.images[currentIndex].url}
-              alt={issue.images[currentIndex].caption}
-              className="rounded-lg shadow w-full"
-              style={{
-                height: '300px',
-                objectFit: 'contain',
-                width: '100%',
-              }}
-            />
-            <div
-              className="absolute top-1/2 left-0 transform -translate-y-1/2 bg-gray-500 bg-opacity-50 p-2 cursor-pointer"
-              onClick={handlePrevious}
-            >
-              <span className="text-white text-lg">←</span>
+        {issue.images && issue.images.length > 0 && (
+          <div className="mb-6">
+            <h2 className="text-xl font-semibold mb-2">Images</h2>
+            <div className="relative">
+              <img
+                src={issue.images[currentIndex].url}
+                alt={issue.images[currentIndex].caption}
+                className="rounded-lg shadow w-full"
+                style={{
+                  height: '300px',
+                  objectFit: 'contain',
+                  width: '100%',
+                }}
+              />
+              <div
+                className="absolute top-1/2 left-0 transform -translate-y-1/2 bg-gray-500 bg-opacity-50 p-2 cursor-pointer"
+                onClick={handlePrevious}
+              >
+                <span className="text-white text-lg">←</span>
+              </div>
+              <div
+                className="absolute top-1/2 right-0 transform -translate-y-1/2 bg-gray-500 bg-opacity-50 p-2 cursor-pointer"
+                onClick={handleNext}
+              >
+                <span className="text-white text-lg">→</span>
+              </div>
+              <p className="text-sm text-gray-600 mt-1 text-center">
+                {issue.images[currentIndex].caption}
+              </p>
             </div>
-            <div
-              className="absolute top-1/2 right-0 transform -translate-y-1/2 bg-gray-500 bg-opacity-50 p-2 cursor-pointer"
-              onClick={handleNext}
-            >
-              <span className="text-white text-lg">→</span>
-            </div>
-            <p className="text-sm text-gray-600 mt-1 text-center">
-              {issue.images[currentIndex].caption}
-            </p>
           </div>
-        </div>
+        )}
+
 
         {/* Assigned To Section */}
         <div className="mb-6">

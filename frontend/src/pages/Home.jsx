@@ -8,6 +8,6 @@ export default function Home() {
 
   if (!isAuthenticated) return <Navigate to="/login" />;
   if (user?.role === 'NGO') return <Navigate to="/ngo-dashboard/requests" />;
-  
-  return <Navigate to="/ngo-dashboard/requests" />;
+  if(user.role==='User')
+  return <Navigate to="/dashboard" />;
 }

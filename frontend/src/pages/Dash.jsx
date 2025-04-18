@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { useNavigate } from 'react-router-dom';
+import { Outlet, useNavigate } from 'react-router-dom';
 import { logout } from '../redux/slices/authSlice';
-import { Menu } from 'lucide-react';
+import { Menu, Outdent } from 'lucide-react';
 
-export default function DashBoard() {
+export default function Dash() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const [isSidebarOpen, setSidebarOpen] = useState(false);
@@ -74,6 +74,7 @@ export default function DashBoard() {
 
   {/* Main content placeholder */}
   <h1 className="text-3xl font-semibold text-gray-700">Welcome, {user?.name || 'User'}!</h1>
+  <Outlet />
 </main>
 
     </div>
