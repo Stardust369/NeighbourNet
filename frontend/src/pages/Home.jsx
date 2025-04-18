@@ -7,7 +7,7 @@ export default function Home() {
   const { isAuthenticated, user } = useSelector((state) => state.auth);
 
   if (!isAuthenticated) return <Navigate to="/login" />;
-  if (user?.role === 'NGO') return <Navigate to="/ngo-dashboard" />;
-  
+  if (user?.role === 'NGO') return <Navigate to="/ngo-dashboard/requests" />;
+  if(user.role==='User')
   return <Navigate to="/dashboard" />;
 }
