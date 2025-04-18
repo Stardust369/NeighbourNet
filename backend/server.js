@@ -3,14 +3,6 @@ import { app } from "./app.js";
 import { config } from "dotenv";
 config();
 
-// Import routes
-import donationRoutes from './routes/donation.routes.js';
-import userRoutes from './routes/user.route.js';
-
-// Use routes
-app.use('/api/v1/donations', donationRoutes);
-app.use('/api/v1/user', userRoutes);
-
 //middleware for error handling
 app.use((err, req, res, next) => {
     const statusCode = err.statusCode || 500;
@@ -22,6 +14,7 @@ app.use((err, req, res, next) => {
     });
 });
 
-app.listen(process.env.PORT || 3000,()=>{
-    console.log(`Server is running on port ${process.env.PORT}`);
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}`);
 });

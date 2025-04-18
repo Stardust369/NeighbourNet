@@ -86,6 +86,7 @@ export const getIssueByUser = async (req, res) => {
     });
   }
 };
+
 //Get all issues (with optional filters)
 export const getAllIssues = async (req, res) => {
   try {
