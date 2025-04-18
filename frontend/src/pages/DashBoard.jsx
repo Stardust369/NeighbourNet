@@ -1,16 +1,16 @@
 import React, { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Outlet } from 'react-router-dom';
 import { logout } from '../redux/slices/authSlice';
 import { Menu } from 'lucide-react';
 
 export default function DashBoard() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const [isSidebarOpen, setSidebarOpen] = useState(false);
+  const [isSidebarOpen, setSidebarOpen] = useState(true);
   const { user } = useSelector((state) => state.auth);
 
-  const sections = ['Created Issues', 'Settings', 'Support'];
+  const sections = ['Created Issues', 'Volunteering Oppurtunities', 'User Dashboard'];
 
   const handleLogout = () => {
     dispatch(logout());
@@ -35,7 +35,7 @@ export default function DashBoard() {
       {/* Sidebar */}
       <aside
         className={`fixed top-0 left-0 h-full w-64 bg-blue-600 text-white p-6 flex flex-col transform transition-transform duration-300 ease-in-out z-40 ${
-          isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
+          isSidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
         }`}
       >
         <h2 className="text-2xl font-bold mb-8">Neighbour Net</h2>
@@ -61,19 +61,14 @@ export default function DashBoard() {
         </button>
       </aside>
 
+      {/* Main content area for nested pages */}
       <main className="flex-1 bg-gray-100 p-6 ml-0 md:ml-64 overflow-y-auto">
-  {/* Top Right Post Issue Button */}
-  <div className="flex justify-end mb-6">
-    <button
-      onClick={() => navigate('/create')}
-      className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition"
-    >
-      + Post Issue
-    </button>
+  <div className="mb-6">
+    <h1 className="text-3xl font-bold text-gray-800">Welcome to Neighbour Net!</h1>
+    <p className="text-gray-600 mt-2">Your one-stop platform to raise issues, volunteer for causes, and make a difference in your neighborhood.</p>
   </div>
 
-  {/* Main content placeholder */}
-  <h1 className="text-3xl font-semibold text-gray-700">Welcome, {user?.name || 'User'}!</h1>
+  <Outlet />
 </main>
 
     </div>
