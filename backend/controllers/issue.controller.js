@@ -74,7 +74,6 @@ export const getIssueByUser = async (req, res) => {
 
   try {
     const issues = await Issue.find({ postedBy: userId });
-    
     res.status(200).json({
       success: true,
       data: issues,

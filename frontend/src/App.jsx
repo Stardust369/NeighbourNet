@@ -13,19 +13,16 @@ import ResetPassword from './pages/ResetPassword'
 import Opportunities from './pages/Opportunities'
 import Dash from './pages/Dash'
 import NGODashh from './pages/NGODashh'
-import DashBoard from './pages/DashBoard'
+import UDashBoard from './pages/UDashBoard'
 import UserDashboard from './pages/UserDashboard'
+import ClaimedIssuesPage from './components/ClaimedIssuesPage'
+import IssueDetailsWrapper from './components/IssueDetailsWrapper'
 import CreatedIssues from './pages/CreatedIssues'
-import ResetPassword from './pages/ResetPassword'
-import { useDispatch, useSelector } from 'react-redux'
+import UserIssueDetailsPage from './components/UserIssueDetails'
 import { getUser } from './redux/slices/authSlice'
 import PostIssue from './pages/PostIssue'
-import IssueDetailsWrapper from './components/IssueDetailsWrapper'
-import ClaimedIssuesPage from './components/ClaimedIssuesPage'
 import Dashboard from './components/Dashboard'
 import AssignedIssues from './pages/AssignedIssues'
-
-import { getUser } from './redux/slices/authSlice'
 
 const App = () => {
   const { user, isAuthenticated } = useSelector((state) => state.auth)
@@ -57,9 +54,9 @@ const App = () => {
         <Route path="/create" element={<PostIssue />} />
         <Route path="/issues/:id" element={<IssueDetailsWrapper />} />
         
-        <Route path="/dashboard" element={<DashBoard />}>
+        <Route path="/dashboard" element={<UDashBoard />}>
           <Route path="created-issues" element={<CreatedIssues />} />
-          <Route path="volunteering-oppurtunities" element={<Opportunities />} />
+          <Route path="volunteering-oppurtunities" element={<Dashboard />} />
           <Route path="user-dashboard" element={<UserDashboard />} />
         </Route>
 
