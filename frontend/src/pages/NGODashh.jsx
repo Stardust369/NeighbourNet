@@ -40,6 +40,7 @@ const NGODashh = () => {
   const [volunteerSearch, setVolunteerSearch] = useState('');
   const [sortConfig, setSortConfig] = useState({ key: 'name', direction: 'asc' });
   const [isLoading, setIsLoading] = useState(true);
+  const [collaboratedIssuesCount, setCollaboratedIssuesCount] = useState(0);
 
   // Redirect if not authenticated
   useEffect(() => {
@@ -84,8 +85,6 @@ const NGODashh = () => {
             console.error(`Error fetching issue with ID: ${issueId}`, error);
           }
         }
-
-
 
         // Calculate statistics
         const completedIssues = claimedIssues.filter(issue => issue.status === 'Completed');
@@ -226,6 +225,21 @@ const NGODashh = () => {
     fetchNGOData();
   }, [user, authLoading, isAuthenticated, navigate]);
 
+  useEffect(() => {
+    const fetchCollaboratedIssuesCount = async () => {
+      try {
+        const res = await fetch(`http://localhost:3000/api/v1/issues/collaborated/${user._id}`);
+        if (!res.ok) throw new Error('Failed to fetch collaborated issues count');
+        const data = await res.json();
+        setCollaboratedIssuesCount(data.collaboratedIssues?.length || 0);
+      } catch (err) {
+        console.error('Error fetching collaborated issues count:', err);
+      }
+    };
+
+    if (user?._id) fetchCollaboratedIssuesCount();
+  }, [user]);
+
   const handleProofReview = (proofId, status) => {
     console.log(`Reviewing proof ${proofId}: ${status}`);
     // implement approval/rejection logic here
@@ -290,26 +304,7 @@ const NGODashh = () => {
         </div>
       </div>
 
-      {/* Location Filter */}
-      <div className="bg-white rounded-lg shadow p-6 mb-8">
-        <div className="flex items-center mb-4">
-          <FaFilter className="text-gray-500 mr-2" />
-          <h2 className="text-xl font-semibold">Filter by Location</h2>
-        </div>
-        <div className="flex space-x-4">
-          {['all', 'Central Park', 'Downtown'].map((loc) => (
-            <button
-              key={loc}
-              onClick={() => handleLocationFilter(loc)}
-              className={`px-4 py-2 rounded-full ${
-                selectedLocation === loc ? 'bg-blue-500 text-white' : 'bg-gray-200'
-              }`}
-            >
-              {loc === 'all' ? 'All Locations' : loc}
-            </button>
-          ))}
-        </div>
-      </div>
+     
 
       {/* Assigned Issues */}
       <div className="bg-white rounded-lg shadow p-6 mb-8">
@@ -333,6 +328,22 @@ const NGODashh = () => {
             <FaArrowRight className="group-hover:translate-x-1 transition" />
       </button>
         </div>
+      </div>
+
+      {/* Add this section after the claimed issues section */}
+      <div className="bg-white shadow rounded-lg p-6">
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-xl font-bold text-blue-700">Collaborated Issues</h2>
+          <button
+            onClick={() => navigate('/collaborated-issues')}
+            className="text-blue-500 hover:text-blue-600 flex items-center space-x-2"
+          >
+            <span>View All</span>
+            <FaArrowRight />
+          </button>
+        </div>
+        <p className="text-3xl font-bold text-blue-800">{collaboratedIssuesCount}</p>
+        <p className="text-gray-600">Total collaborated issues</p>
       </div>
 
       {/* Active Jobs */}

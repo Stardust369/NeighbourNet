@@ -6,10 +6,12 @@ config();
 // Import routes
 import donationRoutes from './routes/donation.routes.js';
 import userRoutes from './routes/user.route.js';
+import collaborationRoutes from './routes/collaboration.route.js';
 
 // Use routes
 app.use('/api/v1/donations', donationRoutes);
 app.use('/api/v1/user', userRoutes);
+app.use('/api/v1/collaboration', collaborationRoutes);
 
 //middleware for error handling
 app.use((err, req, res, next) => {

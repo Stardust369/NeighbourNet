@@ -30,6 +30,8 @@ import NGODonations from './components/NGODonations'
 import PaymentSuccess from './pages/PaymentSuccess'
 import PaymentCancel from './pages/PaymentCancel'
 import AdminDashboard from './pages/AdminDashboard'
+import CollaborationRequestsPage from './pages/CollaborationRequests'
+import CollaboratedIssuesPage from './components/CollaboratedIssuesPage'
 
 const App = () => {
   const { user, isAuthenticated } = useSelector((state) => state.auth)
@@ -65,6 +67,7 @@ const App = () => {
         <Route path="/ngo-dashboard" element={<NGODashboard />}>
           <Route index element={<NGODashh />} />
           <Route path="requests" element={<Dashboard />} />
+          <Route path="collaboration-requests" element={<CollaborationRequestsPage />} />
           <Route path="claimed-issues" element={<ClaimedIssuesPage />} />
           <Route path="donations" element={<NGODonations />} />
         </Route>
@@ -74,6 +77,8 @@ const App = () => {
             <AdminDashboard />
           </ProtectedAdminRoute>
         } />
+
+        <Route path="/collaborated-issues" element={<CollaboratedIssuesPage />} />
       </Routes>
       <ToastContainer />
     </Router>
