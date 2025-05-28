@@ -33,7 +33,6 @@ export default function PostIssue() {
   const { user } = useSelector((state) => state.auth);
   const navigate = useNavigate();
 
-  // Close tag dropdown on outside click
   useEffect(() => {
     function handleClickOutside(event) {
       if (tagDropdownRef.current && !tagDropdownRef.current.contains(event.target)) {
@@ -42,7 +41,7 @@ export default function PostIssue() {
     }
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [tagDropdownRef]);
+  }, []);
 
   const toggleTag = (tag) => {
     setFormData((prev) => {
@@ -94,10 +93,9 @@ export default function PostIssue() {
     setImageUploading(false);
     setImageUploadSuccess(true);
     setTimeout(() => setImageUploadSuccess(false), 3000);
-
-    toast.success('Images uploaded successfully!');
+    toast.success("Images uploaded successfully!");
   };
-  
+
   const handleVideoUpload = async (e) => {
     const files = Array.from(e.target.files);
     if (files.length === 0) return;
@@ -108,8 +106,7 @@ export default function PostIssue() {
     setVideoUploading(false);
     setVideoUploadSuccess(true);
     setTimeout(() => setVideoUploadSuccess(false), 3000);
-    
-    toast.success('Videos uploaded successfully!');
+    toast.success("Videos uploaded successfully!");
   };
 
   const handleRemoveImage = (indexToRemove) => {
@@ -143,10 +140,10 @@ export default function PostIssue() {
         credentials: "include",
         body: JSON.stringify(body),
       });
-      
+
       if (res.ok) {
         toast.success("Issue posted successfully!");
-        navigate("/dashboard/created-issues"); // Navigate to Created Issues section
+        navigate("/dashboard/created-issues");
       } else {
         const data = await res.json();
         setPublishError(data.message || "Failed to post issue.");
@@ -159,17 +156,28 @@ export default function PostIssue() {
     }
   };
 
+  const extractFileName = (url) => {
+    try {
+      const decoded = decodeURIComponent(url.split("/").pop().split("?")[0]);
+      return decoded;
+    } catch (e) {
+      return "Video file";
+    }
+  };
+
   return (
-    <div className="bg-gray-50 min-h-screen p-6">
-      <div className="max-w-3xl mx-auto bg-white p-8 shadow-lg rounded-lg">
-        <h1 className="text-2xl font-bold text-center text-blue-700 mb-6">Post an Issue</h1>
-        <form onSubmit={handleSubmit} className="space-y-6">
+    <div className="bg-[#f5f7fa] min-h-screen py-10 px-4">
+      <div className="max-w-4xl mx-auto bg-white p-10 shadow-lg rounded-lg border border-gray-200">
+        <h1 className="text-3xl font-bold text-blue-700 text-center mb-8">Post an Issue</h1>
+
+        <form onSubmit={handleSubmit} className="space-y-6 text-gray-800">
+          {/* Title */}
           <div>
-            <label htmlFor="title" className="block font-medium mb-1">Title</label>
+            <label htmlFor="title" className="block text-sm font-medium mb-1">Title</label>
             <input
               id="title"
               type="text"
-              className="w-full border border-gray-300 rounded p-2"
+              className="w-full border border-gray-300 rounded-md p-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
               placeholder="Issue title"
               value={formData.title}
               onChange={(e) => setFormData({ ...formData, title: e.target.value })}
@@ -177,16 +185,16 @@ export default function PostIssue() {
             />
           </div>
 
-          {/* Tags Dropdown */}
+          {/* Tags */}
           <div className="relative">
-            <label className="block font-medium mb-1">Tags</label>
+            <label className="block text-sm font-medium mb-1">Tags</label>
             <div
               onClick={() => setShowTagDropdown(!showTagDropdown)}
-              className="w-full border border-gray-300 rounded p-2 flex flex-wrap gap-2 cursor-pointer"
+              className="w-full border border-gray-300 rounded-md p-2 min-h-[42px] flex flex-wrap gap-2 cursor-pointer"
             >
               {formData.tags.length > 0 ? (
                 formData.tags.map((tag) => (
-                  <span key={tag} className="bg-blue-100 text-blue-800 px-2 py-1 rounded">
+                  <span key={tag} className="bg-blue-100 text-blue-700 px-2 py-0.5 rounded text-sm">
                     {tag}
                   </span>
                 ))
@@ -205,12 +213,7 @@ export default function PostIssue() {
                     onClick={() => toggleTag(tag)}
                     className="flex items-center px-4 py-2 hover:bg-gray-100 cursor-pointer"
                   >
-                    <input
-                      type="checkbox"
-                      checked={formData.tags.includes(tag)}
-                      readOnly
-                      className="mr-2"
-                    />
+                    <input type="checkbox" checked={formData.tags.includes(tag)} readOnly className="mr-2" />
                     <span>{tag}</span>
                   </div>
                 ))}
@@ -218,59 +221,51 @@ export default function PostIssue() {
             )}
           </div>
 
-          <div>
-            <label className="block font-medium mb-1">Description</label>
+          {/* Description */}
+          <div className="space-y-2">
+            <label className="block text-sm font-medium mb-1">Description</label>
             <ReactQuill
               theme="snow"
               value={formData.content}
               onChange={handleQuillChange}
               placeholder="Describe the issue in detail..."
+              className="bg-white"
               modules={{
                 toolbar: [
                   [{ header: [1, 2, false] }],
-                  ['bold', 'italic', 'underline', 'strike', 'blockquote'],
-                  [{ list: 'ordered' }, { list: 'bullet' }, { indent: '-1' }, { indent: '+1' }],
-                  ['link', 'image'],
-                  ['clean'],
+                  ["bold", "italic", "underline", "strike", "blockquote"],
+                  [{ list: "ordered" }, { list: "bullet" }, { indent: "-1" }, { indent: "+1" }],
+                  ["link", "image"],
+                  ["clean"],
                 ],
               }}
               formats={[
-                'header', 'bold', 'italic', 'underline', 'strike', 'blockquote',
-                'list', 'bullet', 'indent', 'link', 'image',
+                "header", "bold", "italic", "underline", "strike", "blockquote",
+                "list", "bullet", "indent", "link", "image",
               ]}
-              className="bg-white"
             />
           </div>
 
+          {/* Location */}
           <div>
-            <label className="block font-medium mb-1">Location / Address</label>
+            <label className="block text-sm font-medium mb-1">Location / Address</label>
             <LocationPicker
               eventLocation={formData.issueLocation}
               setEventLocation={(loc) => setFormData({ ...formData, issueLocation: loc })}
             />
           </div>
 
-          {/* Image Upload Section */}
-          <div className="mb-6">
-            <div className="flex items-center justify-between mb-2">
-              <label className="block font-medium">Images</label>
+          {/* Image Upload */}
+          <div>
+            <label className="block text-sm font-medium mb-2">Images</label>
+            <div className="flex items-center gap-2 mb-3">
               <button
                 type="button"
                 onClick={() => imageInputRef.current.click()}
                 className="bg-blue-600 text-white px-4 py-1.5 text-sm rounded hover:bg-blue-700"
                 disabled={imageUploading}
               >
-                {imageUploading ? (
-                  <span className="flex items-center">
-                    <svg className="animate-spin h-4 w-4 mr-1" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
-                    </svg>
-                    Uploading...
-                  </span>
-                ) : (
-                  'Upload Images'
-                )}
+                {imageUploading ? "Uploading..." : "Upload Images"}
               </button>
               <input
                 ref={imageInputRef}
@@ -281,27 +276,17 @@ export default function PostIssue() {
                 onChange={handleImageUpload}
               />
             </div>
-
             {images.length > 0 && (
-              <div className="mt-4 flex flex-wrap items-center gap-2">
+              <div className="flex flex-wrap gap-2">
                 {images.map((img, idx) => (
-                  <div
-                    key={idx}
-                    className="relative w-20 h-20 rounded overflow-hidden border border-gray-300 shadow-sm group"
-                  >
-                    <img
-                      src={img.url}
-                      alt={`uploaded-${idx}`}
-                      className="w-full h-full object-cover"
-                    />
+                  <div key={idx} className="relative w-20 h-20 rounded overflow-hidden border border-gray-300 shadow-sm group">
+                    <img src={img.url} alt={`uploaded-${idx}`} className="w-full h-full object-cover" />
                     <button
                       type="button"
                       onClick={() => handleRemoveImage(idx)}
                       className="absolute top-0 right-0 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
                     >
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-                        <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
-                      </svg>
+                      ✕
                     </button>
                   </div>
                 ))}
@@ -309,27 +294,17 @@ export default function PostIssue() {
             )}
           </div>
 
-          {/* Video Upload Section */}
-          <div className="flex flex-col">
-            <div className="flex items-center justify-between mb-2">
-              <label className="block font-medium">Videos</label>
+          {/* Video Upload */}
+          <div>
+            <label className="block text-sm font-medium mb-2">Videos</label>
+            <div className="flex items-center gap-2 mb-3">
               <button
                 type="button"
                 onClick={() => videoInputRef.current.click()}
-                className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+                className="bg-blue-600 text-white px-4 py-1.5 text-sm rounded hover:bg-blue-700"
                 disabled={videoUploading}
               >
-                {videoUploading ? (
-                  <span className="flex items-center">
-                    <svg className="animate-spin h-5 w-5 mr-2" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
-                    </svg>
-                    Uploading...
-                  </span>
-                ) : (
-                  'Upload Videos'
-                )}
+                {videoUploading ? "Uploading..." : "Upload Videos"}
               </button>
               <input
                 ref={videoInputRef}
@@ -341,20 +316,18 @@ export default function PostIssue() {
               />
             </div>
             {videos.length > 0 && (
-              <div className="mt-4 space-y-2">
+              <div className="space-y-2">
                 {videos.map((video, idx) => (
                   <div key={idx} className="flex items-center justify-between p-2 bg-gray-100 rounded shadow text-sm">
                     <a href={video.url} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
-                      {decodeURIComponent(video.url.split('/').pop().split('?')[0])}
+                      {extractFileName(video.url)}
                     </a>
                     <button
                       type="button"
                       onClick={() => handleRemoveVideo(idx)}
                       className="ml-2 text-red-500 hover:text-red-700"
                     >
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                        <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
-                      </svg>
+                      ✕
                     </button>
                   </div>
                 ))}
@@ -362,10 +335,11 @@ export default function PostIssue() {
             )}
           </div>
 
+          {/* Submit */}
           <button
             type="submit"
             disabled={isSubmitting}
-            className={`w-full py-2 px-4 rounded text-white font-semibold ${
+            className={`w-full py-2 px-4 rounded text-white font-semibold transition-colors ${
               isSubmitting ? "bg-gray-400" : "bg-blue-600 hover:bg-blue-700"
             }`}
           >

@@ -5,6 +5,9 @@ import { register, resetAuthSlice } from '../redux/slices/authSlice';
 import { toast } from 'react-toastify';
 import LocationPicker from "../components/LocationPicker";
 import { Eye, EyeOff } from 'lucide-react';
+import logo from '../assets/logo.png'; // ✅ import logo
+
+const issueTags = ["Road", "Water", "Electricity", "Education", "Health", "Sanitation"];
 
 function Register() {
     const [name, setName] = useState('');
@@ -13,6 +16,7 @@ function Register() {
     const [showPassword, setShowPassword] = useState(false);
     const [location, setLocation] = useState('');
     const [role, setRole] = useState('');
+    const [interests, setInterests] = useState([]);
 
     const dispatch = useDispatch();
     const navigate = useNavigate();
@@ -21,6 +25,9 @@ function Register() {
     const handleRegister = (e) => {
         e.preventDefault();
         if (!location) return toast.error("Please select your location");
+        if (role === 'NGO' && interests.length === 0) {
+            return toast.error("Please select at least one interest");
+        }
 
         const formData = new FormData();
         formData.append('name', name);
@@ -28,8 +35,23 @@ function Register() {
         formData.append('password', password);
         formData.append('location', location);
         formData.append('role', role);
+        if (role === 'NGO') {
+            interests.forEach(interest => {
+                formData.append('interests[]', interest);
+            });
+        }
 
         dispatch(register(formData));
+    };
+
+    const handleInterestChange = (tag) => {
+        setInterests(prev => {
+            if (prev.includes(tag)) {
+                return prev.filter(t => t !== tag);
+            } else {
+                return [...prev, tag];
+            }
+        });
     };
 
     useEffect(() => {
@@ -43,12 +65,16 @@ function Register() {
     if (isAuthenticated) return <Navigate to="/" />;
 
     return (
-        <div className="min-h-screen flex items-center justify-center">
+        <div className="min-h-screen flex flex-col items-center justify-center px-4">
+            {/* Logo */}
+            <img src={logo} alt="App Logo" className="h-70 object-contain mb-6" />
+
+            {/* Registration Form */}
             <form
                 onSubmit={handleRegister}
                 className="w-full max-w-md bg-white p-6 rounded shadow-2xl space-y-4"
             >
-                <h2 className="text-2xl font-bold mb-6 text-center">Register</h2>
+                <h2 className="text-2xl font-bold mb-6 text-center">Register to Neighbour Net</h2>
 
                 <input
                     type="text"
@@ -101,6 +127,25 @@ function Register() {
                     <option value="User">User</option>
                 </select>
 
+                {role === 'NGO' && (
+                    <div className="space-y-2">
+                        <label className="block text-sm font-medium text-gray-700">Interests</label>
+                        <div className="flex flex-wrap gap-2">
+                            {issueTags.map((tag) => (
+                                <label key={tag} className="flex items-center space-x-2">
+                                    <input
+                                        type="checkbox"
+                                        checked={interests.includes(tag)}
+                                        onChange={() => handleInterestChange(tag)}
+                                        className="rounded border-gray-300"
+                                    />
+                                    <span>{tag}</span>
+                                </label>
+                            ))}
+                        </div>
+                    </div>
+                )}
+
                 <button
                     type="submit"
                     className="w-full bg-black text-white py-2 rounded-md hover:bg-gray-800 transition"
@@ -110,7 +155,7 @@ function Register() {
                 </button>
 
                 <p className="text-sm text-center">
-                    Already have an account? <Link to="/login" className="text-blue-600">Login</Link>
+                    Already have an account? <Link to="/login" className="text-blue-600 hover:underline">Login</Link>
                 </p>
             </form>
         </div>

@@ -4,6 +4,8 @@ import axios from 'axios';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import CollaborationDropdown from './CollaborationDropdown';
+import { useNavigate } from 'react-router-dom';
+import { FaComments } from 'react-icons/fa';
 
 export default function NGOIssueDetailsPage({ issue: initialIssue }) {
     const [issue, setIssue] = useState(initialIssue);
@@ -18,6 +20,7 @@ export default function NGOIssueDetailsPage({ issue: initialIssue }) {
     const [selectedTaskForProof, setSelectedTaskForProof] = useState(null);
     const [showUpdatesModal, setShowUpdatesModal] = useState(false);
     const [selectedTaskForUpdates, setSelectedTaskForUpdates] = useState(null);
+    const navigate = useNavigate();
 
     const handleAddPosition = () => {
         setVolunteerPositions([...volunteerPositions, { position: '', slots: '' }]);
@@ -129,7 +132,7 @@ export default function NGOIssueDetailsPage({ issue: initialIssue }) {
     const handleAcceptProof = async (taskId) => {
         try {
             await axios.post('http://localhost:3000/api/v1/issues/acceptTaskProof', {
-                issueId: issue._id,
+                issue: issue,
                 taskId,
                 userId: user._id,
                 userName: user.name
@@ -137,6 +140,8 @@ export default function NGOIssueDetailsPage({ issue: initialIssue }) {
             toast.success('Task completion proof accepted.');
             setShowProofModal(false);
             // Optionally refresh the issue/task data here
+            const res = await axios.get(`http://localhost:3000/api/v1/issues/${issue._id}`);
+            setIssue(res.data.issue); 
         } catch (err) {
             console.error(err);
             toast.error('Failed to accept proof.');
@@ -146,7 +151,7 @@ export default function NGOIssueDetailsPage({ issue: initialIssue }) {
     const handleRejectProof = async (taskId) => {
         try {
             await axios.post('http://localhost:3000/api/v1/issues/rejectTaskProof', {
-                issueId: issue._id,
+                issue: issue,
                 taskId,
                 userId: user._id,
                 userName: user.name
@@ -218,7 +223,16 @@ export default function NGOIssueDetailsPage({ issue: initialIssue }) {
                         />
                         {issue.collaborators && issue.collaborators.length > 0 && (
                             <div className="mt-4">
-                                <h3 className="text-lg font-semibold text-gray-800 mb-2">Collaborators</h3>
+                                <div className="flex justify-between items-center mb-2">
+                                    <h3 className="text-lg font-semibold text-gray-800">Collaborators</h3>
+                                    <button
+                                        onClick={() => navigate(`/collaboration-chat/${issue._id}`)}
+                                        className="bg-indigo-600 text-white px-3 py-1 rounded flex items-center text-sm"
+                                    >
+                                        <FaComments className="mr-1" />
+                                        Chat with Collaborators
+                                    </button>
+                                </div>
                                 <div className="space-y-2">
                                     {issue.collaborators.map((collaborator, index) => (
                                         <div key={index} className="flex items-center space-x-2 bg-gray-50 p-3 rounded-lg">

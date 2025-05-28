@@ -7,6 +7,7 @@ import { User } from '../models/user.model.js';
 import { ApiError } from '../utils/ApiError.js';
 import { ApiResponse } from '../utils/ApiResponse.js';
 import mongoose from "mongoose";
+import { Notification } from '../models/notification.model.js';
 
 //Create a new issue
 export const createIssue = async (req, res) => {
@@ -234,62 +235,67 @@ export const deleteIssue = async (req, res) => {
 
 //Upvote the issue:
 export const upvoteIssue = async (req, res, next) => {
-    try {
-        const { issueId } = req.params;
-        const userId = req.user._id;
-        const issue = await Issue.findById(issueId);
-        
-        if (!issue) {
-            return next(new ApiError(404, "Issue not found"));
-        }
+  try {
+    const { issueId } = req.params;
+    const userId = req.user._id;
+    const issue = await Issue.findById(issueId);
 
-        if (!issue.upvoters)
-            issue.upvoters = [];
-        if (!issue.upvoters.includes(userId)) {
-            issue.upvoters.push(userId);
-            let upvoteCount = issue.upvoters.length;
-            await issue.save();
-            return res.status(200).json(new ApiResponse(200, issue, "Issue upvoted"));
-        }
-        else {
-            return res.status(400).json({ message: "Already upvoted" });
-        }
+    if (!issue) {
+      return next(new ApiError(404, "Issue not found"));
     }
-    catch (error) {
-        next(error);
+
+    if (!issue.upvoters) issue.upvoters = [];
+    if (!issue.downvoters) issue.downvoters = [];
+
+    const upIndex = issue.upvoters.findIndex(id => id.toString() === userId.toString());
+    if (upIndex === -1) {
+      // Not liked yet, so like it and remove any downvote
+      issue.upvoters.push(userId);
+      issue.downvoters = issue.downvoters.filter(id => id.toString() !== userId.toString());
+    } else {
+      // Already liked, so unlike it
+      issue.upvoters.splice(upIndex, 1);
     }
-}
+    await issue.save();
+    return res.status(200).json(new ApiResponse(200, issue, "Issue upvote toggled"));
+  } catch (error) {
+    next(error);
+  }
+};
 
 //downvote the issue: 
 export const downvoteIssue = async (req, res, next) => {
-    try {
-      const { issueId } = req.params;
-      const userId = req.user._id;
-  
-      const issue = await Issue.findById(issueId);
-      if (!issue) return res.status(404).json({ message: "Issue not found" });
-  
-      // Prevent duplicate downvotes
-      if (issue.downvoters.includes(userId)) {
-        issue.downvoters = issue.downvoters.filter(id => id.toString() !== userId.toString());
-      } else {
-        issue.downvoters.push(userId);
-  
-        issue.upvoters = issue.upvoters.filter(id => id.toString() !== userId.toString());
-      }
-  
-      // Auto-flag if threshold reached
-        const limit = 2;
-      if (issue.downvoters.length >= limit) {
-        issue.isFlagged = true;
-      }
-  
-      await issue.save();
-      return res.status(200).json({ success: true, downvotes: issue.downvoters.length, isFlagged: issue.isFlagged });
-    } catch (error) {
-      next(error);
+  try {
+    const { issueId } = req.params;
+    const userId = req.user._id;
+    const issue = await Issue.findById(issueId);
+    if (!issue) return res.status(404).json({ message: "Issue not found" });
+
+    if (!issue.downvoters) issue.downvoters = [];
+    if (!issue.upvoters) issue.upvoters = [];
+
+    const downIndex = issue.downvoters.findIndex(id => id.toString() === userId.toString());
+    if (downIndex === -1) {
+      // Not disliked yet, so dislike it and remove any upvote
+      issue.downvoters.push(userId);
+      issue.upvoters = issue.upvoters.filter(id => id.toString() !== userId.toString());
+    } else {
+      // Already disliked, so remove dislike
+      issue.downvoters.splice(downIndex, 1);
     }
-  };
+
+    // Auto-flag if threshold reached
+    const limit = 2;
+    if (issue.downvoters.length >= limit) {
+      issue.isFlagged = true;
+    }
+
+    await issue.save();
+    return res.status(200).json(new ApiResponse(200, issue, "Issue downvote toggled"));
+  } catch (error) {
+    next(error);
+  }
+};
   
   export const getClaimedIssuesByUser = async (req, res) => {
     const { userId } = req.params;
@@ -375,6 +381,10 @@ export const registerVolunteer = async (req, res) => {
     console.log("here");
     
     selected.registeredVolunteers.push(userId);
+    if (!issue.volunteeredUsers) issue.volunteeredUsers = [];
+    if (!issue.volunteeredUsers.map(id => id.toString()).includes(userId.toString())) {
+      issue.volunteeredUsers.push(userId);
+    }
     user.Issues.push({
       issueId: issueId,
       tasks: [],
@@ -435,6 +445,11 @@ export const markIssueAsCompleted = async (req, res) => {
     issue.volunteerPositions = [];
     await issue.save();
 
+    await Task.updateMany(
+      { issue: issueId },
+      { $set: { status: 'completed' } }
+    );
+
     return res.status(200).json({
       success: true,
       message: 'Issue marked as completed',
@@ -493,7 +508,7 @@ export const submitFeedback = async (req, res) => {
 };
 
 
-export const assignTask = async (req, res) => {
+export const assignTask = async (req, res) => { 
   const { issueId, volunteerId, task } = req.body;
 
   try {
@@ -510,13 +525,22 @@ export const assignTask = async (req, res) => {
       assignedTo: volunteerId,
       description: task,
     });
-     volunteer.Issues.forEach((issue) => {
+
+    // Create notification for the assigned volunteer
+    await Notification.create({
+      userId: volunteerId,
+      type: 'task-assigned',
+      message: `You have been assigned a new task: "${task}" for issue "${issue.title}"`,
+      eventSlug: issue.slug
+    });
+
+    volunteer.Issues.forEach((issue) => {
       if (issue.issueId.toString() === issueId) {
         issue.tasks.push(newTask._id);
       }
-    }
-  );
-  await volunteer.save();
+    });
+       
+    await volunteer.save();
     res.status(201).json({
       message: 'Task assigned successfully',
       task: newTask,
@@ -620,18 +644,21 @@ export const submitTaskProof = async (req, res) => {
 
 export const approveTaskProof = async (req, res) => {
   try {
-    const { taskId } = req.body;
+    const { taskId, issue, userId } = req.body;
 
-    // Find the task by ID
     const task = await Task.findById(taskId);
     if (!task) {
       return res.status(404).json({ message: "Task not found" });
     }
 
-    // Approve the proof: mark task as completed
     task.status = 'completed';
-    // Optionally, you could leave the proof fields intact or clear them
-    // For example: task.proofSubmitted = true; (it should already be true)
+    await Notification.create({
+      userId: userId,
+      type: 'proof-accepted',
+      message: `your proof of the task: "${task}" for issue "${issue.title} was accepted!"`,
+      eventSlug: issue.slug
+    });
+
     await task.save();
 
     return res.status(200).json({
@@ -651,7 +678,7 @@ export const rejectTaskProof = async (req, res) => {
   try {
     console.log("here");
     
-    const { taskId } = req.body;
+    const { taskId, userId, issue } = req.body;
 
     // Find the task by ID
     const task = await Task.findById(taskId);
@@ -659,13 +686,19 @@ export const rejectTaskProof = async (req, res) => {
       return res.status(404).json({ message: "Task not found" });
     }
 
-    // Reject the proof: reset proofSubmitted to false,
-    // clear the proofImages and proofMessage,
-    // and keep the task status as 'pending'
     task.proofSubmitted = false;
     task.proofImages = [];
     task.proofMessage = "";
-    task.status = 'pending'; // Ensuring the task remains pending
+    task.status = 'pending';
+
+    await Notification.create({
+      userId: userId,
+      type: 'proof-rejected',
+      message: `your proof of the task: "${task}" for issue "${issue.title} was rejected!"`,
+      eventSlug: issue.slug
+    });
+
+
     await task.save();
 
     return res.status(200).json({
@@ -703,4 +736,3 @@ export const getCollaboratedIssues = async (req, res) => {
     });
   }
 };
-

@@ -4,6 +4,7 @@ import { Link, Navigate, useNavigate } from 'react-router-dom'
 import { login, resetAuthSlice } from '../redux/slices/authSlice'
 import { Eye, EyeOff } from 'lucide-react'
 import { toast } from 'react-toastify'
+import logo from '../assets/logo.png' 
 
 function Login() {
     const [email, setEmail] = useState("")
@@ -27,7 +28,7 @@ function Login() {
         if (email === ADMIN_EMAIL && password === ADMIN_PASSWORD) {
             dispatch(login({ email, password }))
                 .unwrap()
-                .then((result) => {
+                .then(() => {
                     toast.success('Admin login successful!');
                     setTimeout(() => {
                         navigate('/admin/dashboard');
@@ -61,9 +62,14 @@ function Login() {
     }
 
     return (
-        <div className="min-h-screen flex items-center justify-center px-4">
+        <div className="min-h-screen flex items-center justify-center px-4 bg-gray-50">
             <div className="w-full max-w-md bg-white p-6 rounded-lg shadow-2xl">
-                <h2 className="text-2xl font-bold mb-6 text-center">Welcome Back</h2>
+ 
+                <div className="flex justify-center mb-4">
+                    <img src={logo} alt="App Logo" className="h-70 object-contain" />
+                </div>
+
+                <h2 className="text-2xl font-bold mb-6 text-center">Welcome to Neighbour Net !</h2>
                 <form onSubmit={handleLogin}>
                     <div className="mb-4">
                         <input

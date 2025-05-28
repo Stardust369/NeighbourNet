@@ -1,8 +1,7 @@
-// src/pages/NGODashh.jsx
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import logo from '../assets/logo.png';
 import { useSelector } from 'react-redux';
 import {
   FaTasks,
@@ -12,12 +11,10 @@ import {
   FaCheckCircle,
   FaClock,
   FaFilter,
-  FaImage,
   FaArrowRight,
-  FaTrophy,
   FaSearch,
   FaSort,
-  FaStar
+  FaWhatsapp
 } from 'react-icons/fa';
 
 const NGODashh = () => {
@@ -28,14 +25,12 @@ const NGODashh = () => {
   const [statistics, setStatistics] = useState({
     totalIssuesResolved: 0,
     activeVolunteers: 0,
-    totalDonations: 5000, 
+    totalDonations: 0,
     completionRate: 0
   });
   const [selectedLocation, setSelectedLocation] = useState('all');
   const [assignedIssues, setAssignedIssues] = useState([]);
   const [activeJobs, setActiveJobs] = useState([]);
-  const [taskProofs, setTaskProofs] = useState([]);
-  const [achievements, setAchievements] = useState([]);
   const [volunteers, setVolunteers] = useState([]);
   const [volunteerSearch, setVolunteerSearch] = useState('');
   const [sortConfig, setSortConfig] = useState({ key: 'name', direction: 'asc' });
@@ -65,6 +60,12 @@ const NGODashh = () => {
         const issueRequestsResponse = await fetch(`http://localhost:3000/api/v1/issue-request/${ngoId}`);
         const issueRequests = await issueRequestsResponse.json();
 
+        // Fetch donation statistics
+        const donationStatsResponse = await fetch('http://localhost:3000/api/v1/donations/ngo/statistics', {
+          credentials: 'include'
+        });
+        const donationStats = await donationStatsResponse.json();
+
         // Extract issue IDs from requests
         const issueIds = issueRequests;
         // Fetch issues by IDs
@@ -87,7 +88,8 @@ const NGODashh = () => {
         }
 
         // Calculate statistics
-        const completedIssues = claimedIssues.filter(issue => issue.status === 'Completed');
+        const flattenedIssues = claimedIssues.flat();
+        const completedIssues = flattenedIssues.filter(issue => issue.status === 'Completed');
         const onTimeCompletedIssues = completedIssues.filter(issue => {
           if (!issue.deadline) return false;
           const completionDate = new Date(issue.updatedAt);
@@ -95,7 +97,7 @@ const NGODashh = () => {
           return completionDate <= deadline;
         });
         // Get active volunteers (unique volunteers from all claimed issues)
-        const flattenedIssues = claimedIssues.flat();
+        
 
         // Initialize set
         const activeVolunteersSet = new Set();
@@ -111,7 +113,7 @@ const NGODashh = () => {
         setStatistics({
           totalIssuesResolved: completedIssues.length,
           activeVolunteers: activeVolunteersSet.size,
-          totalDonations: 5000, 
+          totalDonations: donationStats.success ? donationStats.data.totalDonations : 0,
           completionRate: claimedIssues.length > 0 
             ? Math.round((onTimeCompletedIssues.length / claimedIssues.length) * 100) 
             : 0
@@ -157,31 +159,6 @@ const NGODashh = () => {
             }))
           );
         setActiveJobs(jobs);
-
-        // Set task proofs (from issue comments)
-        const proofs = flattenedIssues
-          .filter(issue => issue.status === 'Completed')
-          .flatMap(issue => 
-            issue.comments?.map(comment => ({
-              id: comment._id,
-              taskId: issue._id,
-              proofType: 'text',
-              status: 'pending',
-              submittedAt: comment.date,
-              comment: comment.text
-            }))
-          );
-        setTaskProofs(proofs);
-
-        // Set achievements (based on completed issues)
-        const achievements = completedIssues.map(issue => ({
-          id: issue._id,
-          title: `Completed: ${issue.title}`,
-          date: new Date(issue.updatedAt).toISOString().split('T')[0],
-          description: `Successfully resolved ${issue.title} in ${issue.issueLocation}`,
-          media: issue.images?.map(img => img.url) || []
-        }));
-        setAchievements(achievements);
 
         // Set volunteers (from all claimed issues)
         const volunteerDetails = await Promise.all(
@@ -240,11 +217,6 @@ const NGODashh = () => {
     if (user?._id) fetchCollaboratedIssuesCount();
   }, [user]);
 
-  const handleProofReview = (proofId, status) => {
-    console.log(`Reviewing proof ${proofId}: ${status}`);
-    // implement approval/rejection logic here
-  };
-
   const handleLocationFilter = (loc) => {
     setSelectedLocation(loc);
     // implement filter logic here
@@ -270,8 +242,15 @@ const NGODashh = () => {
 
   return (
     <>
-      <h1 className="text-3xl font-semibold mb-6">Welcome, NGO!</h1>
-
+      {/* Top Welcome Section */}
+      <div className="flex flex-col items-center mb-10">
+        <img src={logo} alt="App Logo" className="h-70" />
+        <h1 className="text-3xl font-bold text-gray-800 tracking-tight">
+          Welcome{user?.name ? `, ${user.name.split(" ")[0]}` : ''} 
+        </h1>
+        <p className="text-gray-500 text-xl mt-2">NGO Dashboard</p>
+      </div>
+      
       {/* Statistics */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
         <div className="bg-white p-6 rounded-lg shadow flex justify-between items-center">
@@ -390,79 +369,6 @@ const NGODashh = () => {
                   </div>
                 ))}
               </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Task Proofs */}
-      <div className="bg-white rounded-lg shadow p-6 mb-8">
-        <h2 className="text-xl font-semibold flex items-center mb-4">
-          <FaImage className="text-purple-500 mr-2" /> Task Proofs
-        </h2>
-        <div className="space-y-4">
-          {taskProofs.map((proof) => (
-            <div key={proof.id} className="border rounded-lg p-4">
-              <div className="flex justify-between items-start">
-                <div>
-                  <h3 className="font-semibold">Task #{proof.taskId}</h3>
-                  <p className="text-sm text-gray-600 mt-1">{proof.comment}</p>
-                  <p className="text-sm text-gray-500 mt-1">
-                    Submitted: {new Date(proof.submittedAt).toLocaleString()}
-                  </p>
-                  <span
-                    className={`inline-block px-2 py-1 rounded-full text-xs font-semibold mt-2 ${
-                      proof.status === 'pending'
-                        ? 'bg-yellow-100 text-yellow-800'
-                        : 'bg-green-100 text-green-800'
-                    }`}
-                  >
-                    {proof.status}
-                  </span>
-                </div>
-                <div className="flex space-x-2">
-                <button
-                    onClick={() => handleProofReview(proof.id, 'approved')}
-                    className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm"
-                >
-                    Approve
-                </button>
-        <button
-                    onClick={() => handleProofReview(proof.id, 'rejected')}
-                    className="px-3 py-1 bg-red-100 text-red-800 rounded-full text-sm"
-        >
-                    Reject
-        </button>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Achievements */}
-      <div className="bg-white rounded-lg shadow p-6 mb-8">
-        <h2 className="text-xl font-semibold flex items-center mb-4">
-          <FaTrophy className="text-yellow-500 mr-2" /> Achievements
-        </h2>
-        <div className="space-y-4">
-          {achievements.map((ach) => (
-            <div key={ach.id} className="border rounded-lg p-4">
-              <h3 className="font-semibold">{ach.title}</h3>
-              <p className="text-sm text-gray-600">Date: {ach.date}</p>
-              <p className="mt-1">{ach.description}</p>
-              {ach.media.length > 0 && (
-                <div className="flex space-x-2 mt-2">
-                  {ach.media.map((m, i) => (
-                    <img
-                      key={i}
-                      src={m}
-                      alt={`Media ${i + 1}`}
-                      className="w-20 h-20 object-cover rounded-lg"
-                    />
-                  ))}
-                </div>
-              )}
             </div>
           ))}
         </div>

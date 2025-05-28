@@ -11,6 +11,8 @@ import paymentRoutes from './routes/payment.routes.js'
 import adminRoutes from './routes/admin.routes.js'
 import collaborationRoutes from './routes/collaboration.routes.js'
 import eventRoutes from './routes/event.route.js'
+import notificationRoutes from './routes/notification.routes.js'
+import taskRoutes from './routes/task.route.js';
 
 export const app = express();
 
@@ -29,7 +31,7 @@ app.use(express.urlencoded({extended: true}));
 
 // Add this after creating the app but before any routes
 app.use((req, res, next) => {
-  console.log('Incoming request:', req.method, req.url);
+  // console.log('Incoming request:', req.method, req.url);
   next();
 });
 
@@ -42,5 +44,7 @@ app.use("/api/v1/payments", paymentRoutes);
 app.use('/api/v1/admin', adminRoutes);
 app.use('/api/v1/collaboration', collaborationRoutes);
 app.use("/api/v1/events", eventRoutes);
+app.use('/api/v1/notifications', notificationRoutes);
+app.use('/api/v1/tasks', taskRoutes);
 
 connectDB();

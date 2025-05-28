@@ -116,6 +116,10 @@ const IssueSchema = new mongoose.Schema(
         date: { type: Date, default: Date.now },
       },
     ],
+    volunteeredUsers: [{
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User"
+    }],
     volunteerPositions: [
       {
         position: {

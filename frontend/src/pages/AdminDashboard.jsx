@@ -404,7 +404,10 @@ const AdminDashboard = () => {
               {/* Content */}
               <div className="bg-gray-50 p-4 rounded-lg">
                 <h4 className="font-semibold mb-3">Description</h4>
-                <p className="text-gray-700 whitespace-pre-wrap">{issueDetails.content}</p>
+                <div
+                  className="text-gray-700 whitespace-pre-wrap"
+                  dangerouslySetInnerHTML={{ __html: issueDetails.content }}
+                ></div>
               </div>
 
               {/* Volunteer Positions */}
@@ -719,4 +722,3 @@ const CompletedIssueCard = ({ issue, onViewDetails, onViewFeedback, onGenerateRe
 );
 
 export default AdminDashboard;
-

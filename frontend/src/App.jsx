@@ -14,7 +14,9 @@ import ResetPassword from './pages/ResetPassword'
 import NGODashboard from './pages/NGODashboard'
 import Dash from './pages/Dash'
 import NGODashh from './pages/NGODashh'
-
+import CollaborationChat from './pages/CollaborationChat'
+import Notifications from './pages/Notifications'
+import NGOs from './pages/NGOs'
 import UDashBoard from './pages/UDashBoard'
 import UserDashboard from './pages/UserDashboard'
 import ClaimedIssuesPage from './components/ClaimedIssuesPage'
@@ -32,6 +34,8 @@ import PaymentCancel from './pages/PaymentCancel'
 import AdminDashboard from './pages/AdminDashboard'
 import CollaborationRequestsPage from './pages/CollaborationRequests'
 import CollaboratedIssuesPage from './components/CollaboratedIssuesPage'
+import NGODetails from './pages/NGODetails'
+import NGOClaimedIssues from './pages/NGOClaimedIssues'
 
 import Events from './pages/Events'
 import CreateEvent from './pages/CreateEvent'
@@ -62,7 +66,6 @@ const App = () => {
         <Route path="/payment-success" element={<PaymentSuccess />} />
         <Route path="/payment-cancel" element={<PaymentCancel />} />
         
-        {/* Event Routes */}
         <Route path="/events" element={<Events />} />
         <Route path="/events/:id" element={<EventDetailsWrapper />} />
         
@@ -72,6 +75,9 @@ const App = () => {
           <Route path="user-dashboard" element={<UserDashboard />} />
           <Route path="donations" element={<Donations />} />
           <Route path="postissue" element={<PostIssue />} />
+          <Route path="notifications" element={<Notifications />} />
+          <Route path="ngo" element={<NGOs />} />
+          <Route path="ngo-details/:ngoId" element={<NGODetails />} />
           {/* User Event Routes */}
           <Route path="my-events" element={<RegisteredEvents />} />
         </Route>
@@ -82,7 +88,6 @@ const App = () => {
           <Route path="collaboration-requests" element={<CollaborationRequestsPage />} />
           <Route path="claimed-issues" element={<ClaimedIssuesPage />} />
           <Route path="donations" element={<NGODonations />} />
-          {/* NGO Event Routes */}
           <Route path="create-event" element={<CreateEvent />} />
           <Route path="created-events" element={<CreatedEvents />} />
           <Route path="events/:id/edit" element={<CreateEvent />} />
@@ -95,6 +100,11 @@ const App = () => {
         } />
 
         <Route path="/collaborated-issues" element={<CollaboratedIssuesPage />} />
+        <Route path="/collaboration-chat/:issueId" element={<CollaborationChat />} />
+
+        {/* NGO Routes */}
+        <Route path="/ngo/:ngoId" element={<NGODetails />} />
+        <Route path="/ngo/:ngoId/claimed-issues" element={<NGOClaimedIssues />} />
       </Routes>
       <ToastContainer />
     </Router>

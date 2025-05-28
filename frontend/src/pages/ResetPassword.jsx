@@ -5,6 +5,7 @@ import { Link } from 'react-router-dom';
 import { resetAuthSlice, resetPassword } from '../redux/slices/authSlice';
 import { toast } from 'react-toastify';
 import { Eye, EyeOff } from 'lucide-react';
+import logo from '../assets/logo.png'; 
 
 function ResetPassword() {
    const [password, setPassword] = useState('');
@@ -47,7 +48,7 @@ return (
         <div className="hidden w-full md:w-1/2 bg-black text-white md:flex flex-col items-center justify-center p-8 rounded-tr-[80px] rounded-br-[88px]">
             <div className="text-center h-[450px]">
                 <div className="flex justify-center mb-12">
-                    <img src='https://samarthanam.org/wp-content/uploads/2023/10/samarthanam-logo.jpg' alt="logo" className="mb-12 h-44 w-auto" />
+                    <img src={logo} alt="logo" className="mb-12 h-44 w-auto" />
                 </div>
             </div>
         </div>
@@ -62,7 +63,7 @@ return (
             <div className="max-w-sm w-full">
                 <div className="flex justify-center mb-12">
                     <div className="rounded-full flex items-center justify-center">
-                        <img src='https://samarthanam.org/wp-content/uploads/2023/10/samarthanam-logo.jpg' alt="logo" className="h-24 w-auto" />
+                        <img src={logo} alt="logo" className="h-24 w-auto" />
                     </div>
                 </div>
                 <h1 className="text-4xl font-medium text-center mb-5 overflow-hidden">
