@@ -23,6 +23,7 @@ import ClaimedIssuesPage from './components/ClaimedIssuesPage'
 import IssueDetailsWrapper from './components/IssueDetailsWrapper'
 import CreatedIssues from './pages/CreatedIssues'
 import UserIssueDetailsPage from './components/UserIssueDetails'
+import IssueFeedbackPage from './pages/IssueFeedbackPage'
 import { getUser } from './redux/slices/authSlice'
 import PostIssue from './pages/PostIssue'
 import Dashboard from './components/Dashboard'
@@ -78,6 +79,7 @@ const App = () => {
           <Route path="notifications" element={<Notifications />} />
           <Route path="ngo" element={<NGOs />} />
           <Route path="ngo-details/:ngoId" element={<NGODetails />} />
+          <Route path="/dashboard/feedback" element={<IssueFeedbackPage />} />
           {/* User Event Routes */}
           <Route path="my-events" element={<RegisteredEvents />} />
         </Route>

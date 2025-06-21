@@ -175,7 +175,10 @@ export const getIssueFeedback = async (req, res) => {
   }
 };
 
-// Generate AI report from feedback
+import { GoogleGenAI } from '@google/genai';
+
+const genAI = new GoogleGenAI({ apiKey: process.env.API_KEY });
+
 export const generateFeedbackReport = async (req, res) => {
   try {
     const { issueId } = req.body;
@@ -184,66 +187,52 @@ export const generateFeedbackReport = async (req, res) => {
     const issue = await Issue.findById(issueId)
       .populate('feedback.user', 'name')
       .select('feedback title');
-    console.log(issue);
-    
+
     if (!issue) {
       return res.status(404).json({ success: false, message: 'Issue not found' });
     }
 
-    const feedbackText = issue.feedback.map(fb => 
-      `\nSatisfaction: ${fb.satisfaction}/10\nResolved: ${fb.resolved}\nComment: ${fb.suggestions || fb.issueProblem}`
+    const feedbackText = issue.feedback.map(fb =>
+      `Satisfaction: ${fb.satisfaction}/10\nResolved: ${fb.resolved}\nComment: ${fb.suggestions || fb.issueProblem}`
     ).join('\n\n');
-    console.log(feedbackText);
-    
-    const reportGenerationPrompt = 
-    `You are an expert at analyzing community feedback and generating comprehensive reports. 
-    Analyze the following feedback and provide a JSON response with the following structure:
-    {
-      "overallRating": number, // average satisfaction rating
-      "resolutionStatus": string, // "Highly Successful", "Successful", "Moderately Successful", or "Needs Improvement"
-      "keyHighlights": string[], // array of positive themes
-      "areasForImprovement": string[], // array of negative themes
-      "actionableSuggestions": string[], // array of suggestions
-      "finalVerdict": string // brief conclusion
-    }
-    Ensure the response is valid JSON and contains no markdown formatting or additional text.`;
 
-    const response = await axios.post('https://openrouter.ai/api/v1/chat/completions', {
-      model: 'deepseek/deepseek-chat-v3-0324:free',
-      messages: [
-        {
-          role: 'system',
-          content: reportGenerationPrompt
-        },
-        {
-          role: 'user',
-          content: `Please analyze the following feedback for the issue "${issue.title}" and generate a comprehensive report:\n\n${feedbackText}`
-        }
-      ]
-    }, {
-      headers: {
-        'Authorization': `Bearer ${process.env.OPENROUTER_API_KEY}`,
-        'Content-Type': 'application/json'
-      }
+    const prompt = `
+You are an expert at analyzing community feedback and generating comprehensive reports.
+Analyze the following feedback and provide a JSON response with the following structure:
+{
+  "overallRating": number, // average satisfaction rating
+  "resolutionStatus": string, // "Highly Successful", "Successful", "Moderately Successful", or "Needs Improvement"
+  "keyHighlights": string[], // array of positive themes
+  "areasForImprovement": string[], // array of negative themes
+  "actionableSuggestions": string[], // array of suggestions
+  "finalVerdict": string // brief conclusion
+}
+Ensure the response is valid JSON and contains no markdown formatting or additional text.
+
+Feedback for issue titled "${issue.title}":
+${feedbackText}
+`;
+
+    const result = await genAI.models.generateContent({
+      model: 'gemini-1.5-flash',
+      contents: [{ role: 'user', parts: [{ text: prompt }] }]
     });
 
-    const report = response.data.choices[0].message.content;
-    
-    console.log('====================================');
-    console.log('Raw AI Response:', report);
-    console.log('====================================');
+    const aiResponse = result.candidates?.[0]?.content?.parts?.[0]?.text || '';
 
-    // Clean the response to ensure it's valid JSON
-    const cleanReport = report.replace(/```json\n|\n```/g, '').trim();
-    const reportJSON = JSON.parse(cleanReport);
-    
-    console.log('====================================');
-    console.log('Parsed JSON:', reportJSON);
-    console.log('====================================');
+    if (!aiResponse) {
+      throw new Error("No response received from Gemini");
+    }
 
-    res.json({ success: true, report: reportJSON });
+    console.log("🔍 Raw Gemini Response:", aiResponse);
+
+    const clean = aiResponse.replace(/```json|```/g, '').trim();
+    const parsed = JSON.parse(clean);
+
+    res.json({ success: true, report: parsed });
+
   } catch (error) {
-    console.error('Error generating feedback report:', error.message);
-    res.status(500).json({ success: false, message: 'Failed to generate feedback report', error: error.message });
+    console.error("❌ Error generating report:", error.message);
+    res.status(500).json({ success: false, message: "Failed to generate feedback report", error: error.message });
   }
-}; 
+};

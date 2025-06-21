@@ -3,6 +3,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate, Outlet } from 'react-router-dom';
 import { logout } from '../redux/slices/authSlice';
 import { Menu, User, ClipboardList, Heart, LogOut, Home, PlusCircle, Calendar, Bell, Building2 } from 'lucide-react';
+import { FaComments } from 'react-icons/fa';
 
 export default function UDashBoard() {
   const dispatch = useDispatch();
@@ -11,7 +12,7 @@ export default function UDashBoard() {
   const { user } = useSelector((state) => state.auth);
 
   // Add "My Events" and "Notifications" to the sections array
-  const sections = ['Created Issues', 'Volunteering Oppurtunities', 'User Dashboard', 'Donations', 'PostIssue', 'My Events', 'Notifications', 'NGOs'];
+  const sections = ['Created Issues', 'Volunteering Oppurtunities', 'User Dashboard', 'Donations', 'PostIssue', 'My Events', 'Notifications', 'NGOs', 'Feedback'];
 
   const sectionIcons = {
     'Created Issues': <ClipboardList size={18} />, 
@@ -21,7 +22,8 @@ export default function UDashBoard() {
     'PostIssue': <PlusCircle size={18} />,
     'My Events': <Calendar size={18} />,
     'Notifications': <Bell size={18} />,
-    'NGOs': <Building2 size={18} />
+    'NGOs': <Building2 size={18} />,
+    'Feedback': <FaComments size={18} />
   };
 
   const handleLogout = () => {

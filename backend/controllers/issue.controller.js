@@ -1,9 +1,6 @@
 import Issue from '../models/issue.model.js';
 import { Task } from '../models/task.model.js';
 import { User } from '../models/user.model.js';
-// import Job from '../models/job.model.js';
-// import { Notification } from '../models/notification.model.js';
-// import { notifyIssuePicked } from './notification.controller.js';
 import { ApiError } from '../utils/ApiError.js';
 import { ApiResponse } from '../utils/ApiResponse.js';
 import mongoose from "mongoose";
@@ -117,6 +114,79 @@ export const getIssueThroughId = async (req, res) => {
     });
   }
 };
+
+export const getIssueFeedback = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const issue = await Issue.findById(id)
+      .populate('feedback.user', 'name');
+    
+    if (!issue) {
+      return res.status(404).json({
+        success: false,
+        message: 'Issue not found'
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      feedback: issue.feedback
+    });
+  } catch (error) {
+    console.error('Error fetching feedback:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Error fetching feedback',
+      error: error.message
+    });
+  }
+};
+
+
+export const submitFeedback = async (req, res) => {
+  try {
+    // Get issueId from either URL parameter or body
+    const issueId = req.params.issueId || req.body.issueId;
+    const { resolved, satisfaction, suggestions, issueProblem } = req.body;
+    const issue = await Issue.findById(issueId);
+
+    if (!issue) {
+      return res.status(404).json({ message: "Issue not found" });
+    }
+
+    // Check if user has already submitted feedback
+    const hasSubmitted = issue.feedback.some(f => f.user.equals(req.user._id));
+    if (hasSubmitted) {
+      return res.status(403).json({ message: "You have already submitted feedback for this issue" });
+    }
+
+    // Add new feedback
+    issue.feedback.push({
+      user: req.user._id,
+      resolved,
+      satisfaction: parseInt(satisfaction),
+      suggestions,
+      issueProblem,
+      createdAt: new Date()
+    });
+
+    await issue.save();
+
+    return res.status(201).json({
+      success: true,
+      message: "Feedback submitted successfully",
+      feedback: issue.feedback[issue.feedback.length - 1]
+    });
+  } catch (error) {
+    console.error('Error submitting feedback:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Error submitting feedback',
+      error: error.message
+    });
+  }
+};
+
 //Get all issues (with optional filters)
 export const getAllIssues = async (req, res) => {
   try {
@@ -461,53 +531,6 @@ export const markIssueAsCompleted = async (req, res) => {
   }
 };
 
-export const submitFeedback = async (req, res) => {
-  try {
-    const { issueId } = req.params;
-    const userId = req.user._id; // assuming auth middleware sets req.user
-    const { resolved, satisfaction, suggestions, issueProblem } = req.body;
-
-    if (!["Yes", "No"].includes(resolved)) {
-      return res.status(400).json({ message: "Resolved must be 'Yes' or 'No'." });
-    }
-
-    const issue = await Issue.findById(issueId);
-
-    if (!issue) {
-      return res.status(404).json({ message: "Issue not found." });
-    }
-
-    if (issue.status !== "Completed") {
-      return res.status(400).json({ message: "Feedback can only be submitted for completed issues." });
-    }
-
-    const alreadySubmitted = issue.feedback.some((fb) =>
-      fb.user.toString() === userId.toString()
-    );
-
-    if (alreadySubmitted) {
-      return res.status(400).json({ message: "You have already submitted feedback for this issue." });
-    }
-
-    const newFeedback = {
-      user: userId,
-      resolved,
-      satisfaction,
-      suggestions,
-      issueProblem,
-    };
-
-    issue.feedback.push(newFeedback);
-    await issue.save();
-
-    res.status(200).json({ message: "Feedback submitted successfully." });
-  } catch (error) {
-    console.error("Error submitting feedback:", error);
-    res.status(500).json({ message: "Internal server error." });
-  }
-};
-
-
 export const assignTask = async (req, res) => { 
   const { issueId, volunteerId, task } = req.body;
 
@@ -710,6 +733,31 @@ export const rejectTaskProof = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: error.message,
+    });
+  }
+};
+
+export const getCompletedIssues = async (req, res) => {
+  try {
+    console.log('Fetching completed issues');
+    const issues = await Issue.find({ status: 'Completed' })
+      .populate('postedBy', 'name')
+      .populate('feedback.user', 'name')
+      .sort({ createdAt: -1 });
+    
+    console.log('Found completed issues:', issues.length);
+    console.log('First issue:', issues[0] || 'No issues found');
+    
+    return res.status(200).json({
+      success: true,
+      issues
+    });
+  } catch (error) {
+    console.error('Error in getCompletedIssues:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Error fetching completed issues',
+      error: error.message
     });
   }
 };
