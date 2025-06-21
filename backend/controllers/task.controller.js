@@ -8,7 +8,10 @@ export const getUserTasks = async (req, res) => {
     const tasks = await Task.find({ assignedTo: userId })
       .populate('issue', 'title')
       .sort({ createdAt: -1 });
-    res.status(200).json({ success: true, tasks });
+    res.status(200).json({
+      success: true,
+      data: tasks
+    });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }

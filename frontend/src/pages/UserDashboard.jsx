@@ -19,7 +19,11 @@ const UserDashboard = () => {
     const fetchUserTasks = async () => {
       try {
         const res = await axios.get(`http://localhost:3000/api/v1/tasks/user/${userId}`);
-        const tasks = res.data;
+        const tasks = res.data.success ? res.data.data : [];
+        if (!Array.isArray(tasks)) {
+          console.error('Invalid tasks data format:', tasks);
+          throw new Error('Invalid tasks data format');
+        }
         // Split tasks by status
         const completed = tasks.filter(task => task.status === 'completed');
         const pending = tasks.filter(task => task.status !== 'completed');
